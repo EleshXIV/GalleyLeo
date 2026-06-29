@@ -12,10 +12,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Galley">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- No external resources: fonts are system fonts, so this page makes zero network requests. -->
 <style>
+  /* System font stacks — no downloads, no CDN, nothing leaves the browser. */
   :root{
     --desk:#171a21; --desk2:#1e222b; --line:#2b313c; --line2:#39414f;
     --leaf:#e8e9e3; --leaf-line:#d3d5cb; --ink:#23262c; --ink-soft:#5b626d;
@@ -95,7 +94,7 @@
   .gx-rs b{color:#eef0f3;font-weight:500;font-size:15px}
   .gx-strip-scroll{overflow-x:auto;padding-bottom:10px}
   .gx-strip{display:flex;align-items:flex-end;gap:2px;height:104px;min-width:min-content;
-    border-bottom:1px solid var(--line2);padding-bottom:0}
+    border-bottom:1px solid var(--line2);padding-bottom:0;user-select:none;-webkit-user-select:none}
   .gx-bar{width:7px;flex:0 0 7px;background:var(--pencil);border-radius:1px 1px 0 0;cursor:pointer;
     opacity:.82;transition:opacity .12s,transform .12s;transform-origin:bottom}
   .gx-bar:hover{opacity:1;transform:scaleY(1.04)}
@@ -122,16 +121,16 @@
   .gx-mini:focus-visible{outline:2px solid var(--pencil);outline-offset:2px}
 
   .gx-rows{display:flex;flex-direction:column;gap:1px;max-height:340px;overflow-y:auto}
-  .gx-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;
+  .gx-row{display:grid;grid-template-columns:1fr 56px;align-items:center;gap:12px;
     padding:7px 10px;border-radius:3px;cursor:pointer;background:transparent;transition:background .12s;
     text-align:left;border:0;color:inherit;width:100%;font-family:inherit}
   .gx-row:hover{background:var(--pencil-dim)}
   .gx-row:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
-  .gx-row .term{display:flex;align-items:center;gap:11px;min-width:0}
+  .gx-row .term{display:grid;grid-template-columns:116px 1fr;align-items:center;gap:11px;min-width:0}
   .gx-row .word{font-family:var(--serif);font-size:16px;color:#eef0f3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .gx-row .barwrap{position:relative;height:5px;flex:1;min-width:30px;background:var(--line);border-radius:3px;overflow:hidden}
+  .gx-row .barwrap{position:relative;height:5px;min-width:30px;background:var(--line);border-radius:3px;overflow:hidden}
   .gx-row .barfill{position:absolute;inset:0 auto 0 0;background:var(--pencil-soft);border-radius:3px}
-  .gx-row .ct{font-family:var(--mono);font-size:13px;color:var(--txt-soft);font-weight:500}
+  .gx-row .ct{font-family:var(--mono);font-size:13px;color:var(--txt-soft);font-weight:500;text-align:right;white-space:nowrap}
   .gx-empty{font-family:var(--mono);font-size:12px;color:var(--txt-faint);padding:8px 2px}
 
   /* openers sequence chips */
@@ -195,6 +194,65 @@
 
   .hidden{display:none !important}
 
+  /* opener-type breakdown */
+  .gx-otbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:2px 0 9px;background:var(--line)}
+  .gx-otbar .seg{height:100%}
+  .gx-otkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 15px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--txt-faint)}
+  .gx-otkey .ok i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .gx-otkey .ok b{color:var(--txt-soft);font-weight:600}
+
+  /* monotony flags */
+  .gx-monotony{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-height:200px;overflow-y:auto;padding-right:4px}
+  .gx-selbar{display:flex;align-items:center;gap:14px;margin-top:14px;padding:9px 14px;background:var(--pencil-dim);border:1px solid var(--pencil-soft);border-radius:4px}
+  .gx-selbar #selCount{font-family:var(--mono);font-size:12px;color:#eef0f3;letter-spacing:.02em}
+  .gx-selclear{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-soft);background:var(--desk2);border:1px solid var(--line);border-radius:3px;padding:5px 11px;cursor:pointer;transition:border-color .12s,color .12s;white-space:nowrap}
+  .gx-selclear:hover{border-color:var(--brick-soft);color:var(--brick-soft)}
+  .gx-flat{font-family:var(--sans);font-size:12.5px;text-align:left;color:var(--txt);background:var(--desk);border:1px solid var(--line);border-left:2px solid var(--pencil-soft);border-radius:3px;padding:8px 11px;cursor:pointer;transition:background .12s}
+  .gx-flat:hover{background:var(--pencil-dim)}
+  .gx-flat:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
+  .gx-flat-clear{font-family:var(--serif);font-size:14px;font-style:italic;color:var(--txt-soft)}
+
+  /* watch-words sub sections */
+  .gx-sub-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil-soft);margin:18px 0 9px;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .gx-sub-label:first-of-type{margin-top:4px}
+  .gx-sub-label span{font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;color:var(--txt-faint)}
+  .gx-sub-label em{font-style:italic}
+  .gx-watch-add{display:flex;gap:8px;margin:0 0 10px}
+  .gx-row.gx-watchrow{grid-template-columns:1fr 56px auto}
+  .gx-watchrow .gx-x{margin-left:10px;color:var(--txt-faint);font-family:var(--mono);cursor:pointer;padding:0 3px;border-radius:3px}
+  .gx-watchrow .gx-x:hover{color:var(--brick-soft);background:var(--brick-dim)}
+
+  /* echoes */
+  .gx-echo{display:flex;align-items:baseline;gap:12px;padding:9px 12px;background:var(--desk);border:1px solid var(--line);border-left:2px solid #c4a04a;border-radius:3px;cursor:pointer;text-align:left;color:inherit;font-family:inherit;transition:background .12s;width:100%}
+  .gx-echo:hover{background:rgba(196,160,74,.12)}
+  .gx-echo:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
+  .gx-echo .ew{font-family:var(--serif);font-size:16px;color:#eef0f3}
+  .gx-echo .ed{font-family:var(--mono);font-size:11px;color:var(--txt-faint)}
+
+  /* find-in-text bar */
+  .gx-ms-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .gx-find{display:flex;align-items:center;gap:8px}
+  .gx-find input{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--leaf-line);color:var(--ink);padding:5px 9px;border-radius:3px;outline:0;width:170px}
+  .gx-find input:focus{border-color:var(--pencil)}
+  .gx-findct{font-family:var(--mono);font-size:10px;color:#8b8f86;min-width:34px}
+
+  /* compare */
+  .gx-check{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--txt-soft);display:inline-flex;align-items:center;gap:7px;cursor:pointer;text-transform:uppercase}
+  .gx-check input{accent-color:var(--pencil);width:15px;height:15px;cursor:pointer}
+  .gx-ta-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--pencil-soft);margin:0 0 8px}
+  .gx-ta-label:empty{display:none}
+  .gx-labelrow{display:flex;align-items:center;gap:10px;margin:0 0 8px;min-height:16px}
+  .gx-labelrow .gx-ta-label{margin:0}
+  .gx-filemini{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-soft);background:var(--desk2);border:1px solid var(--line);border-radius:3px;padding:5px 11px;cursor:pointer;transition:border-color .12s,color .12s;white-space:nowrap}
+  .gx-filemini:hover{border-color:var(--pencil-soft);color:var(--txt)}
+  .gx-cmptable{width:100%;border-collapse:collapse;font-family:var(--sans)}
+  .gx-cmptable th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-faint);text-align:right;padding:8px 14px;border-bottom:1px solid var(--line)}
+  .gx-cmptable th:first-child{text-align:left}
+  .gx-cmptable td{padding:11px 14px;font-size:14px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--mono);color:#eef0f3}
+  .gx-cmptable td:first-child{text-align:left;font-family:var(--sans);color:var(--txt-soft)}
+  .gx-cmptable .d{color:var(--txt-faint);font-size:12.5px}
+  .gx-cmptable tr:last-child td{border-bottom:0}
+
   @media (max-width:960px){
     .gx-metrics{grid-template-columns:repeat(3,1fr)}
     .gx-grid{grid-template-columns:1fr}
@@ -226,18 +284,40 @@
       <h1>Paste a chapter, a scene, or the whole draft.</h1>
       <p>GalleyLeo measures every sentence, tallies the words, charts the rhythm, and marks the mechanics &mdash; then links each finding straight back to the line it came from.</p>
     </div>
+    <div class="gx-labelrow">
+      <span class="gx-ta-label" id="taLabel1"></span>
+      <label class="gx-filemini" for="fileInput">Open .txt<input type="file" id="fileInput" accept=".txt,.md,text/plain" class="hidden"></label>
+    </div>
     <div class="gx-ta-wrap">
       <textarea id="ta" class="gx-ta" spellcheck="false" placeholder="The hammer fell. Iron rang against iron, and Ren did not look up&hellip;"></textarea>
       <div class="gx-counter" id="liveCount">0 words</div>
     </div>
+    <div class="hidden" id="ta2Block" style="margin-top:24px">
+      <div class="gx-labelrow">
+        <span class="gx-ta-label">Revised draft</span>
+        <label class="gx-filemini" for="fileInput2">Open .txt<input type="file" id="fileInput2" accept=".txt,.md,text/plain" class="hidden"></label>
+      </div>
+      <div class="gx-ta-wrap">
+        <textarea id="ta2" class="gx-ta" spellcheck="false" placeholder="Paste the newer version here&hellip;"></textarea>
+        <div class="gx-counter" id="liveCount2">0 words</div>
+      </div>
+    </div>
     <div class="gx-tools">
       <button class="gx-btn gx-btn--go" id="goBtn">Analyze</button>
       <button class="gx-btn" id="sampleBtn">Load sample</button>
-      <label class="gx-btn" for="fileInput" style="display:inline-flex;align-items:center">Open .txt
-        <input type="file" id="fileInput" accept=".txt,.md,text/plain" class="hidden"></label>
       <button class="gx-btn gx-btn--ghost" id="clearBtn">Clear</button>
+      <label class="gx-check"><input type="checkbox" id="compareToggle"> Compare two drafts</label>
       <span class="gx-hint" id="bigHint"></span>
     </div>
+  </main>
+
+  <!-- COMPARE VIEW -->
+  <main class="gx-results hidden" id="compareView">
+    <div class="gx-backbar">
+      <button class="gx-btn" id="backBtn2">&larr; New text</button>
+      <h2>Earlier &rarr; Revised</h2>
+    </div>
+    <section class="gx-card"><div class="gx-cmp" id="compareBody"></div></section>
   </main>
 
   <!-- RESULTS VIEW -->
@@ -245,6 +325,7 @@
     <div class="gx-backbar">
       <button class="gx-btn" id="backBtn">&larr; New text</button>
       <h2>Reading</h2>
+      <button class="gx-btn gx-btn--ghost" id="copyBtn" style="margin-left:auto">Copy report</button>
     </div>
 
     <div class="gx-metrics" id="metrics"></div>
@@ -252,20 +333,25 @@
     <!-- signature -->
     <section class="gx-card">
       <h3>Sentence rhythm</h3>
-      <p class="sub">Each mark is one sentence; its height is the word count. Hover to read it, click to find it below.</p>
+      <p class="sub">Each mark is one sentence; its height is the word count. Hover to read it, click to find it below. Drag across bars or shift-click to select a range; &#8984;/Ctrl-click adds or removes one.</p>
       <div class="gx-rhythm-stats" id="rhythmStats"></div>
       <div class="gx-strip-scroll"><div class="gx-strip" id="strip"></div></div>
       <div class="gx-legend">
         <span><i style="background:var(--pencil)"></i>sentence</span>
         <span><i style="background:var(--brick)"></i>fragment &le;4 words</span>
       </div>
+      <div class="gx-selbar hidden" id="selInfo">
+        <span id="selCount"></span>
+        <button class="gx-selclear" id="selClear">Clear selection</button>
+      </div>
+      <div class="gx-monotony" id="monotony"></div>
     </section>
 
     <div class="gx-grid">
       <div class="gx-col">
         <section class="gx-card">
           <h3>Word frequency</h3>
-          <p class="sub">Your tally, most-used first. Click any word to light up every place it appears.</p>
+          <p class="sub">Your tally, most-used first. Click a word to step through each place it appears.</p>
           <div class="gx-toggle-row">
             <input type="text" id="wordSearch" class="gx-search" placeholder="look up a word&hellip;">
             <button class="gx-mini active" id="fnToggle">Hide function words</button>
@@ -275,9 +361,32 @@
 
         <section class="gx-card">
           <h3>Sentence openers</h3>
-          <p class="sub">The first word of every sentence. Repeats are where prose starts to feel mechanical.</p>
+          <p class="sub">The first word of every sentence. Repeats are where prose starts to feel mechanical. Click an opener to step through the sentences it starts.</p>
+          <div class="gx-otbar" id="openerTypeBar"></div>
+          <div class="gx-otkey" id="openerTypeKey"></div>
           <div class="gx-rows" id="openerRows" style="max-height:240px"></div>
           <div class="gx-seq" id="openerSeq"></div>
+        </section>
+
+        <section class="gx-card">
+          <h3>Watch words</h3>
+          <p class="sub">Crutch words to weigh &mdash; click any to step through its uses. Each is a candidate to cut, not a rule.</p>
+          <div class="gx-sub-label">Filter words <span>perception &amp; hedges that hold the reader at arm&rsquo;s length</span></div>
+          <div class="gx-rows" id="filterRows" style="max-height:200px"></div>
+          <div class="gx-sub-label">Adverbs <span>every <em>-ly</em> word; a classic trim pass</span></div>
+          <div class="gx-rows" id="adverbRows" style="max-height:200px"></div>
+          <div class="gx-sub-label">Your watchlist <span>track your own pet words or phrases</span></div>
+          <div class="gx-watch-add">
+            <input type="text" id="watchInput" class="gx-search" placeholder="add a word or phrase&hellip;">
+            <button class="gx-mini" id="watchAdd">Add</button>
+          </div>
+          <div class="gx-rows" id="watchRows" style="max-height:200px"></div>
+        </section>
+
+        <section class="gx-card">
+          <h3>Echoes</h3>
+          <p class="sub">The same distinctive word landing twice within a few sentences &mdash; the repeats global frequency won&rsquo;t catch. Click to see the pair.</p>
+          <div class="gx-marks" id="echoRows"></div>
         </section>
 
         <section class="gx-card">
@@ -289,7 +398,7 @@
 
         <section class="gx-card" id="confCard">
           <h3>Confusables to scan</h3>
-          <p class="sub">Not errors &mdash; just commonly-swapped pairs worth an eye. Click a count to inspect each use.</p>
+          <p class="sub">Not errors &mdash; just commonly-swapped pairs worth an eye. Click a word to step through its uses one at a time.</p>
           <div class="gx-conf" id="conf"></div>
         </section>
       </div>
@@ -297,7 +406,10 @@
       <div class="gx-col gx-col--text">
         <section class="gx-card" style="padding:0;overflow:hidden">
           <div class="gx-ms" id="ms">
-            <div class="gx-ms-head">The manuscript &middot; &para; marks the paragraph</div>
+            <div class="gx-ms-head">
+              <span>The manuscript &middot; &para; marks the paragraph</span>
+              <span class="gx-find"><input type="text" id="findInput" placeholder="find in text &mdash; Enter to step&hellip;"><span class="gx-findct" id="findCount"></span></span>
+            </div>
             <div id="msBody"></div>
           </div>
         </section>
@@ -369,7 +481,7 @@ function analyze(text){
     let pCursor=0; // local offset into p as we render sentences (they reconstruct p exactly)
     sents.forEach(sent=>{
       const sIdx=gsi++;
-      const rec={gsi:sIdx, pi, lengthWords:0, firstWord:null, wordIdxs:[]};
+      const rec={gsi:sIdx, pi, lengthWords:0, firstWord:null, wordIdxs:[], opensQuote:/^\s*["'\u201C\u2018]/.test(sent)};
       // render sentence: walk tokens, wrap words, escape gaps
       WORD_RE.lastIndex=0;
       let m, last=0, sHtml="";
@@ -379,7 +491,7 @@ function analyze(text){
         const id=gwi++;
         sHtml += `<span class="gx-w" id="w${id}" data-w="${esc(nrm)}" data-s="${sIdx}">${esc(orig)}</span>`;
         freq.set(nrm,(freq.get(nrm)||0)+1);
-        allWords.push({gwi:id, gsi:sIdx, pi, norm:nrm, orig});
+        allWords.push({gwi:id, gsi:sIdx, pi, norm:nrm, orig, pOff:pCursor+m.index});
         rec.wordIdxs.push(id);
         rec.lengthWords++;
         if(rec.firstWord===null) rec.firstWord=nrm;
@@ -411,8 +523,41 @@ function proof(model, rawParas){
       marks.push({kind:"repeated word",soft:true,pi,gwi:w?w.gwi:null,
         msg:`Doubled word &mdash; <em>${esc(m[1])} ${esc(m[3])}</em>. Intentional, or a slip?`});
     }
-    // double space
-    if(/ {2,}/.test(p)) marks.push({kind:"spacing",soft:true,pi,gwi:null,msg:"Two or more spaces in a row."});
+    // double space — but ignore paragraph indentation and the two-spaces-after-a-sentence convention
+    {
+      const dsp=/ {2,}/g; let dm, flagDS=false;
+      while((dm=dsp.exec(p))!==null){
+        const before = dm.index===0 ? "" : p[dm.index-1];
+        if(before==="") continue;                                   // leading indent — intentional
+        if(/[.!?\u2026"'\u201D\u2019)\]]/.test(before)) continue;    // spacing after a sentence end or closing mark
+        flagDS=true; break;
+      }
+      if(flagDS) marks.push({kind:"spacing",soft:true,pi,gwi:null,msg:"Two or more spaces between words."});
+    }
+    // period where a comma belongs — a quote that runs straight into a lowercase dialogue tag
+    {
+      const dlg=/([.])(["'\u201D\u2019])(\s+)([a-z][a-z'\u2019]*)/g; let dm2;
+      while((dm2=dlg.exec(p))!==null){
+        if(p[dm2.index-1]===".") continue; // last dot of an ellipsis, not a sentence period
+        const tagOff = dm2.index + dm2[1].length + dm2[2].length + dm2[3].length;
+        const wrec = (wordsByPara[pi]||[]).find(x=>x.pOff===tagOff);
+        marks.push({kind:"dialogue punctuation",soft:false,pi,gwi:wrec?wrec.gwi:null,gsi:wrec?wrec.gsi:null,
+          msg:`A period closes this quote, but the tag <em>${esc(dm2[4])}</em> follows it &mdash; with a tag, the quote normally closes on a comma: <em>&hellip;,&rdquo; ${esc(dm2[4])}</em> rather than <em>&hellip;.&rdquo; ${esc(dm2[4])}</em>`});
+      }
+    }
+    // period before a capitalised dialogue tag (name + speech verb) — likely should be a comma
+    {
+      const SPEECH="said asked replied answered whispered murmured muttered shouted yelled exclaimed demanded insisted stated declared announced remarked retorted snapped hissed growled stammered mumbled protested interjected drawled";
+      const dlgC=new RegExp("([.])([\"'\\u201D\\u2019])(\\s+)([A-Z][a-zA-Z'\\u2019]*(?:\\s+[A-Z][a-zA-Z'\\u2019]*)?)(\\s+)("+SPEECH.split(" ").join("|")+")\\b","g");
+      let dm3;
+      while((dm3=dlgC.exec(p))!==null){
+        if(p[dm3.index-1]===".") continue; // ellipsis, not a sentence period
+        const tagOff = dm3.index + dm3[1].length + dm3[2].length + dm3[3].length;
+        const wrec = (wordsByPara[pi]||[]).find(x=>x.pOff===tagOff);
+        marks.push({kind:"dialogue punctuation",soft:true,pi,gwi:wrec?wrec.gwi:null,gsi:wrec?wrec.gsi:null,
+          msg:`If <em>${esc(dm3[4])} ${esc(dm3[6])}</em> is a dialogue tag, the period should be a comma inside the quote: <em>&hellip;,&rdquo; ${esc(dm3[4])}</em>. (If it&rsquo;s a new sentence, the period is fine.)`});
+      }
+    }
     // space before punctuation
     if(/\s[,.;:!?]/.test(p)) marks.push({kind:"spacing",soft:true,pi,gwi:null,msg:"A space sits before a punctuation mark."});
     // missing space after sentence punctuation
@@ -424,6 +569,22 @@ function proof(model, rawParas){
     if(cq!==ccq) marks.push({kind:"quotes",soft:false,pi,gwi:null,msg:"Curly quotes don\u2019t pair up &mdash; an opener or closer is missing."});
     const paren=(p.match(/\(/g)||[]).length-(p.match(/\)/g)||[]).length;
     if(paren!==0) marks.push({kind:"brackets",soft:false,pi,gwi:null,msg:"Parentheses don\u2019t balance in this paragraph."});
+    // no terminal punctuation — a prose paragraph that doesn't end on a closing mark
+    {
+      const t=p.replace(/\s+$/,"");
+      const lastCh=t.slice(-1);
+      const okEnd=/[.!?\u2026"'\u201D\u2019)\]\u2014\u2013:;]/.test(lastCh);
+      const wlist=t.match(/[A-Za-z][A-Za-z'\u2019]*/g)||[];
+      const wc=wlist.length;
+      const allCaps=/[A-Z]/.test(t) && t===t.toUpperCase();
+      const capRatio=wc?wlist.filter(w=>/^[A-Z]/.test(w)).length/wc:0;
+      const looksTitle=capRatio>0.6 && wc<=8;          // chapter heading / title, not prose
+      if(!okEnd && wc>=5 && !allCaps && !looksTitle){
+        const lw=(wordsByPara[pi]||[]).slice(-1)[0];
+        marks.push({kind:"end punctuation",soft:true,pi,gwi:lw?lw.gwi:null,
+          msg:`This paragraph doesn&rsquo;t end on a closing mark &mdash; a sentence may be missing its period.`});
+      }
+    }
   });
 
   // per-sentence: lowercase start (possible) + very long (review) + no terminal punctuation
@@ -449,8 +610,66 @@ const CONF_GROUPS=[
   ["lead","led"],["bated","baited"],["aloud","allowed"],["passed","past"],["weather","whether"],["principal","principle"]
 ];
 
+/* ---------------- watch words, adverbs, echoes, opener types, rhythm, dialogue, find ---------------- */
+const WEAKENERS=new Set("very really quite rather somewhat just actually basically simply literally suddenly somehow perhaps maybe almost nearly slightly pretty totally completely absolutely definitely certainly merely truly utterly fairly felt saw heard watched noticed realized realised seemed thought knew wondered sensed glanced began started".split(" "));
+const ADVERB_EXCEPTIONS=new Set("only early reply apply supply family ally rally rely italy holy ugly silly jelly belly bully lily folly anomaly assembly multiply imply comply lovely lonely friendly lively deadly likely costly homely timely orderly elderly cowardly motherly fatherly scholarly daily weekly monthly yearly lowly jolly surly burly curly hilly chilly gangly wobbly bubbly prickly crumbly melancholy fly sly ply".split(" "));
+const isAdverb=w=>w.length>=4 && w.endsWith("ly") && !ADVERB_EXCEPTIONS.has(w);
+const PRON=new Set("he she it they we you i his her its their our your him them himself herself themselves".split(" "));
+const ARTC=new Set("the a an".split(" "));
+const CONJ=new Set("and but or so yet nor for because although though while since unless until if when whereas".split(" "));
+
+function wordsByParaIdx(model){ const o={}; model.allWords.forEach(w=>{(o[w.pi]=o[w.pi]||[]).push(w);}); return o; }
+function listBySet(model,set){ const map=new Map();
+  model.allWords.forEach(w=>{ if(set.has(w.norm)) (map.get(w.norm)||map.set(w.norm,[]).get(w.norm)).push(w.gwi); });
+  return [...map.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])); }
+function listAdverbs(model){ const map=new Map();
+  model.allWords.forEach(w=>{ if(isAdverb(w.norm)) (map.get(w.norm)||map.set(w.norm,[]).get(w.norm)).push(w.gwi); });
+  return [...map.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])); }
+function detectEchoes(model,win=30){ const echoes=[]; const last={};
+  model.allWords.forEach((w,idx)=>{ if(w.norm.length>=5 && !STOP.has(w.norm) && /^[\p{L}]/u.test(w.norm)){
+    const prev=last[w.norm];
+    if(prev && (idx-prev.idx)<=win) echoes.push({word:w.norm,a:prev.gwi,b:w.gwi,dist:idx-prev.idx});
+    last[w.norm]={gwi:w.gwi,idx};
+  }}); return echoes; }
+function openerTypes(model){ const t={Dialogue:0,Pronoun:0,Article:0,"-ing":0,Conjunction:0,Other:0};
+  model.sentences.forEach(s=>{ if(!s.wordIdxs.length) return;
+    if(s.opensQuote){t.Dialogue++;return;}
+    const fw=s.firstWord;
+    if(PRON.has(fw))t.Pronoun++; else if(ARTC.has(fw))t.Article++;
+    else if(/ing$/.test(fw)&&fw.length>4)t["-ing"]++; else if(CONJ.has(fw))t.Conjunction++; else t.Other++;
+  }); return t; }
+function monotonyRuns(model,band=4,minRun=5){ const lens=model.sentences.map(s=>s.lengthWords); const runs=[]; let i=0;
+  while(i<lens.length){ let j=i,mn=lens[i],mx=lens[i];
+    while(j+1<lens.length){ const nmn=Math.min(mn,lens[j+1]),nmx=Math.max(mx,lens[j+1]);
+      if(nmx-nmn<=band){mn=nmn;mx=nmx;j++;} else break; }
+    if(j-i+1>=minRun && lens[i]>0) runs.push({start:i,end:j,lo:mn,hi:mx,count:j-i+1});
+    i=j+1; }
+  return runs; }
+function quoteRanges(p){ const r=[]; let open=-1,inQ=false;
+  for(let i=0;i<p.length;i++){ const c=p[i];
+    const isOpen=c==='\u201C'||(c==='"'&&!inQ), isClose=c==='\u201D'||(c==='"'&&inQ);
+    if(!inQ&&isOpen){inQ=true;open=i;} else if(inQ&&isClose){inQ=false;r.push([open,i]);} }
+  if(inQ)r.push([open,p.length]); return r; }
+function dialogueRatio(model){ const wbp=wordsByParaIdx(model); let inside=0;
+  model.paras.forEach((p,pi)=>{ const ranges=quoteRanges(p);
+    (wbp[pi]||[]).forEach(w=>{ if(ranges.some(rg=>w.pOff>=rg[0]&&w.pOff<rg[1])) inside++; }); });
+  return model.totalWords?inside/model.totalWords:0; }
+function findMatches(model,query){ const q=(query||"").trim(); if(!q) return [];
+  const wbp=wordsByParaIdx(model);
+  const escq=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  let re; try{ re=new RegExp((/^[\p{L}\p{N}]/u.test(q)?'\\b':'')+escq+(/[\p{L}\p{N}]$/u.test(q)?'\\b':''),'giu'); }catch(e){ return []; }
+  const matches=[];
+  model.paras.forEach((p,pi)=>{ re.lastIndex=0; let m;
+    while((m=re.exec(p))!==null){ const s=m.index,e=m.index+m[0].length;
+      const g=(wbp[pi]||[]).filter(w=>w.pOff<e && (w.pOff+w.orig.length)>s).map(w=>w.gwi);
+      if(g.length) matches.push(g);
+      if(m.index===re.lastIndex) re.lastIndex++; } });
+  return matches; }
+
 /* ============================ STATE + RENDER ============================ */
 let MODEL=null, MARKS=null, OPENER_MAP=null, FREQ_SORTED=null, hideFn=true;
+let WATCHLIST=[], GEN_STEP={};
+let SEL=new Set(), SEL_ANCHOR=null, dragStartGsi=null, dragMoved=false, dragLastGsi=null;
 
 const $=id=>document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -467,9 +686,14 @@ function run(){
   buildRhythm();
   buildFreq();
   buildOpeners();
+  buildWatchWords();
+  buildEchoes();
   buildMarks();
   buildConfusables();
   $("msBody").innerHTML=MODEL.html;
+  GEN_STEP={};
+  SEL.clear(); SEL_ANCHOR=null; dragStartGsi=null; updateSelInfo();
+  $("findInput").value=""; $("findCount").textContent="";
   $("inputView").classList.add("hidden");
   $("resultsView").classList.remove("hidden");
   window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
@@ -505,8 +729,17 @@ function buildRhythm(){
     ["mean",nz.length?(nz.reduce((a,b)=>a+b,0)/nz.length).toFixed(1):0],
     ["longest",max],
     ["fragments",frags],
-    ["30+ words",longs]
+    ["30+ words",longs],
+    ["dialogue",(dialogueRatio(MODEL)*100).toFixed(0)+"%"]
   ].map(([l,v])=>`<span class="gx-rs">${l} <b>${v}</b></span>`).join("");
+
+  const runs=monotonyRuns(MODEL);
+  const mono=$("monotony");
+  if(runs.length){
+    mono.innerHTML=runs.map(r=>
+      `<button class="gx-flat" data-s="${r.start}" data-e="${r.end}">Flat stretch &mdash; sentences ${r.start+1}&ndash;${r.end+1} all sit at ${r.lo}&ndash;${r.hi} words</button>`).join("");
+    mono.querySelectorAll(".gx-flat").forEach(b=>b.addEventListener("click",()=>{ selectRange(+b.dataset.s,+b.dataset.e,true,{strip:true,manuscript:true}); }));
+  } else { mono.innerHTML=`<span class="gx-flat-clear">No long flat stretches &mdash; the rhythm keeps moving.</span>`; }
 
   const strip=$("strip"); strip.innerHTML="";
   MODEL.sentences.forEach(s=>{
@@ -516,13 +749,85 @@ function buildRhythm(){
     b.style.height=h+"px";
     b.title=`Sentence ${s.gsi+1} \u00B7 ${s.lengthWords} word${s.lengthWords===1?"":"s"}`;
     b.dataset.s=s.gsi;
-    b.addEventListener("click",()=>{ markStripActive(s.gsi); gotoSentence(s.gsi); });
+    b.addEventListener("mousedown",e=>onBarDown(s.gsi,e));
     strip.appendChild(b);
   });
 }
-function markStripActive(gsi){
-  $("strip").querySelectorAll(".gx-bar.on").forEach(b=>b.classList.remove("on"));
-  const b=$("strip").querySelector(`.gx-bar[data-s="${gsi}"]`); if(b) b.classList.add("on");
+function barEl(gsi){ const s=$("strip"); const b=s&&s.children[gsi]; return (b&&b.classList&&b.classList.contains("gx-bar"))?b:null; }
+function scrollStripToBars(bars){
+  if(!bars.length) return;
+  const sc=$("strip").parentElement; // .gx-strip-scroll
+  const scRect=sc.getBoundingClientRect();
+  const a=bars[0].getBoundingClientRect(), z=bars[bars.length-1].getBoundingClientRect();
+  const mid=((a.left-scRect.left)+(z.right-scRect.left))/2;
+  const target=sc.scrollLeft+mid-sc.clientWidth/2;
+  const max=Math.max(0,sc.scrollWidth-sc.clientWidth);
+  sc.scrollTo({left:Math.min(Math.max(0,target),max),behavior:reduced?"auto":"smooth"});
+}
+
+/* ---- sentence selection (driven from the rhythm strip) ---- */
+function applySelection(opts){
+  opts=opts||{};
+  const strip=$("strip");
+  const sorted=[...SEL].sort((a,b)=>a-b);
+  strip.querySelectorAll(".gx-bar.on").forEach(b=>b.classList.remove("on"));
+  const bars=[];
+  sorted.forEach(gsi=>{ const b=strip.children[gsi]; if(b&&b.classList&&b.classList.contains("gx-bar")){ b.classList.add("on"); bars.push(b); } });
+  if(!opts.barsOnly){
+    document.querySelectorAll(".hl-s,.hl-w,.hl-p").forEach(el=>el.classList.remove("hl-s","hl-w","hl-p"));
+    let firstSent=null;
+    sorted.forEach(gsi=>{ const s=$("s"+gsi); if(s){ s.classList.add("hl-s"); if(!firstSent) firstSent=s; } });
+    if(opts.strip && bars.length) scrollStripToBars(bars);
+    if(opts.manuscript && firstSent) scrollIn(firstSent);
+  }
+  updateSelInfo();
+}
+function selectRange(a,b,anchorAtA,scroll){
+  const lo=Math.min(a,b),hi=Math.max(a,b);
+  SEL=new Set(); for(let i=lo;i<=hi;i++) SEL.add(i);
+  SEL_ANCHOR=anchorAtA?a:b;
+  applySelection(scroll||{strip:true,manuscript:true});
+}
+function clearSelection(){
+  SEL.clear(); SEL_ANCHOR=null;
+  document.querySelectorAll(".hl-s,.hl-w,.hl-p").forEach(el=>el.classList.remove("hl-s","hl-w","hl-p"));
+  const strip=$("strip"); if(strip) strip.querySelectorAll(".gx-bar.on").forEach(b=>b.classList.remove("on"));
+  updateSelInfo();
+}
+function updateSelInfo(){
+  const bar=$("selInfo"); if(!bar) return;
+  const n=SEL.size;
+  if(!n||!MODEL){ bar.classList.add("hidden"); return; }
+  let words=0; SEL.forEach(gsi=>{ const s=MODEL.sentences[gsi]; if(s) words+=s.lengthWords; });
+  $("selCount").textContent=n+" sentence"+(n===1?"":"s")+" \u00B7 "+words.toLocaleString()+" word"+(words===1?"":"s")+" selected";
+  bar.classList.remove("hidden");
+}
+function barIndexFromX(clientX){
+  const strip=$("strip"), sc=strip.parentElement, n=strip.children.length;
+  if(!n) return null;
+  const scRect=sc.getBoundingClientRect();
+  let i=Math.floor((clientX-scRect.left+sc.scrollLeft)/9); // 7px bar + 2px gap
+  if(i<0)i=0; if(i>=n)i=n-1; return i;
+}
+function onBarDown(gsi,e){
+  e.preventDefault();
+  if(e.shiftKey && SEL_ANCHOR!=null){ selectRange(SEL_ANCHOR,gsi,true,{manuscript:true}); dragStartGsi=null; return; }
+  if(e.metaKey||e.ctrlKey){ if(SEL.has(gsi)) SEL.delete(gsi); else SEL.add(gsi); SEL_ANCHOR=gsi; applySelection({manuscript:true}); dragStartGsi=null; return; }
+  dragStartGsi=gsi; dragMoved=false; dragLastGsi=gsi;
+  SEL=new Set([gsi]); SEL_ANCHOR=gsi; applySelection({barsOnly:true});
+}
+function onStripDrag(e){
+  if(dragStartGsi==null) return;
+  const gsi=barIndexFromX(e.clientX); if(gsi==null||gsi===dragLastGsi) return;
+  dragLastGsi=gsi; dragMoved=true;
+  const lo=Math.min(dragStartGsi,gsi),hi=Math.max(dragStartGsi,gsi);
+  SEL=new Set(); for(let i=lo;i<=hi;i++) SEL.add(i); SEL_ANCHOR=dragStartGsi;
+  applySelection({barsOnly:true});
+}
+function onStripUp(){
+  if(dragStartGsi==null) return;
+  dragStartGsi=null;
+  applySelection({manuscript:true});
 }
 
 function sortedFreq(){
@@ -540,14 +845,24 @@ function buildFreq(filter){
   const host=$("freqRows");
   if(!top.length){ host.innerHTML=`<div class="gx-empty">No matching words.</div>`; return; }
   host.innerHTML=top.map(([w,c])=>
-    `<button class="gx-row" data-w="${esc(w)}">
+    `<button class="gx-row" title="${esc(w)} \u2014 step through each use" data-w="${esc(w)}">
        <span class="term"><span class="word">${esc(w)}</span>
        <span class="barwrap"><span class="barfill" style="width:${Math.round(c/max*100)}%"></span></span></span>
        <span class="ct">${c}</span></button>`).join("");
-  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>highlightWord(r.dataset.w)));
+  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>stepFreq(r)));
 }
 
 function buildOpeners(){
+  // opener-type breakdown
+  const ot=openerTypes(MODEL);
+  const total=Object.values(ot).reduce((a,b)=>a+b,0)||1;
+  const palette={Dialogue:"var(--brick-soft)",Pronoun:"var(--pencil)",Article:"var(--pencil-soft)","-ing":"#8a7db0",Conjunction:"#c4a04a",Other:"#5c636e"};
+  const order=["Pronoun","Article","Dialogue","-ing","Conjunction","Other"];
+  $("openerTypeBar").innerHTML=order.filter(k=>ot[k]>0).map(k=>
+    `<span class="seg" style="width:${(ot[k]/total*100).toFixed(1)}%;background:${palette[k]}" title="${k}: ${ot[k]}"></span>`).join("");
+  $("openerTypeKey").innerHTML=order.map(k=>
+    `<span class="ok"><i style="background:${palette[k]}"></i>${k==="Article"?'"The/A"':k} <b>${Math.round(ot[k]/total*100)}%</b></span>`).join("");
+
   const map=new Map();
   MODEL.sentences.forEach(s=>{ if(s.firstWord!=null){ (map.get(s.firstWord)||map.set(s.firstWord,[]).get(s.firstWord)).push(s.gsi); }});
   OPENER_MAP=map;
@@ -556,11 +871,11 @@ function buildOpeners(){
   const repeated=new Set(rows.filter(([,a])=>a.length>1).map(([w])=>w));
   const host=$("openerRows");
   host.innerHTML=rows.slice(0,40).map(([w,a])=>
-    `<button class="gx-row" data-o="${esc(w)}">
+    `<button class="gx-row" title="${esc(w)} \u2014 step through each sentence" data-o="${esc(w)}">
        <span class="term"><span class="word">${esc(w)}</span>
        <span class="barwrap"><span class="barfill" style="width:${Math.round(a.length/max*100)}%;background:${a.length>1?'var(--brick-soft)':'var(--pencil-soft)'}"></span></span></span>
        <span class="ct">${a.length}</span></button>`).join("");
-  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>highlightOpener(r.dataset.o)));
+  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>stepOpener(r)));
 
   // ordered sequence of first words
   const seq=$("openerSeq");
@@ -570,7 +885,84 @@ function buildOpeners(){
       const rep=repeated.has(s.firstWord)?" rep":"";
       return `<span class="gx-chip${rep}" data-go="${s.gsi}" title="Sentence ${s.gsi+1}">${esc(w)}</span>`;
     }).join("");
-  seq.querySelectorAll(".gx-chip").forEach(c=>c.addEventListener("click",()=>{ markStripActive(+c.dataset.go); gotoSentence(+c.dataset.go); }));
+  seq.querySelectorAll(".gx-chip").forEach(c=>c.addEventListener("click",()=>{ gotoSentence(+c.dataset.go); }));
+}
+
+function rowMarkup(w,c,max,extra){
+  return `<button class="gx-row" title="${esc(w)} \u2014 step through each use" ${extra}>
+       <span class="term"><span class="word">${esc(w)}</span>
+       <span class="barwrap"><span class="barfill" style="width:${Math.round(c/max*100)}%"></span></span></span>
+       <span class="ct">${c}</span></button>`;
+}
+function buildWatchWords(){
+  // filter words (weakeners)
+  const wk=listBySet(MODEL,WEAKENERS);
+  const wkMax=wk.length?wk[0][1].length:1;
+  const wkHost=$("filterRows");
+  wkHost.innerHTML = wk.length ? wk.map(([w,a])=>rowMarkup(w,a.length,wkMax,`data-w="${esc(w)}"`)).join("")
+    : `<div class="gx-empty">None of the usual filter words turned up.</div>`;
+  wkHost.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>stepFreq(r)));
+  // adverbs
+  const ad=listAdverbs(MODEL);
+  const adMax=ad.length?ad[0][1].length:1;
+  const adHost=$("adverbRows");
+  adHost.innerHTML = ad.length ? ad.map(([w,a])=>rowMarkup(w,a.length,adMax,`data-w="${esc(w)}"`)).join("")
+    : `<div class="gx-empty">No -ly adverbs found.</div>`;
+  adHost.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>stepFreq(r)));
+  renderWatchlist();
+}
+function renderWatchlist(){
+  const host=$("watchRows");
+  if(!WATCHLIST.length){ host.innerHTML=`<div class="gx-empty">Add a word or phrase above to track your own tics.</div>`; return; }
+  const counts=WATCHLIST.map(term=>({term,n:MODEL?findMatches(MODEL,term).length:0}));
+  const max=Math.max(1,...counts.map(c=>c.n));
+  host.innerHTML=counts.map(({term,n})=>
+    `<button class="gx-row gx-watchrow" title="${esc(term)} \u2014 step through each use" data-term="${esc(term)}">
+       <span class="term"><span class="word">${esc(term)}</span>
+       <span class="barwrap"><span class="barfill" style="width:${Math.round(n/max*100)}%;background:#c4a04a"></span></span></span>
+       <span class="ct">${n}</span><span class="gx-x" title="Remove">\u00D7</span></button>`).join("");
+  host.querySelectorAll(".gx-watchrow").forEach(r=>{
+    r.addEventListener("click",e=>{
+      if(e.target.classList.contains("gx-x")){ WATCHLIST=WATCHLIST.filter(t=>t!==r.dataset.term); renderWatchlist(); return; }
+      stepWatch(r);
+    });
+  });
+}
+function buildEchoes(){
+  const echoes=detectEchoes(MODEL);
+  const host=$("echoRows");
+  if(!echoes.length){ host.innerHTML=`<div class="gx-allclear">No close repeats &mdash; no words echoing within a few sentences.</div>`; return; }
+  host.innerHTML=echoes.map((e,i)=>
+    `<button class="gx-echo" data-i="${i}"><span class="ew">${esc(e.word)}</span>
+       <span class="ed">repeats after ${e.dist} word${e.dist===1?"":"s"}</span></button>`).join("");
+  host.querySelectorAll(".gx-echo").forEach(b=>b.addEventListener("click",()=>{
+    const e=echoes[+b.dataset.i]; clearHL();
+    const ea=$("w"+e.a), eb=$("w"+e.b);
+    if(ea) ea.classList.add("hl-w"); if(eb) eb.classList.add("hl-w");
+    scrollIn(eb||ea);
+  }));
+}
+/* generic stepper over a list of matches (each match = array of word ids) */
+function stepMatches(key, countEl, matches){
+  if(!matches.length){ if(countEl) countEl.textContent="0"; return; }
+  if(!GEN_STEP[key]) GEN_STEP[key]={cur:-1};
+  const st=GEN_STEP[key];
+  st.cur=(st.cur+1)%matches.length;
+  clearHL();
+  let first=null;
+  matches[st.cur].forEach(gi=>{ const e=$("w"+gi); if(e){ e.classList.add("hl-w"); if(!first)first=e; } });
+  if(first) scrollIn(first);
+  if(countEl) countEl.textContent=(st.cur+1)+"/"+matches.length;
+}
+function stepWatch(row){
+  const term=row.dataset.term;
+  const ct=row.querySelector(".ct");
+  stepMatches("watch:"+term, ct, findMatches(MODEL,term));
+}
+function runFind(){
+  const q=$("findInput").value;
+  if(!q.trim()){ clearHL(); $("findCount").textContent=""; GEN_STEP["find"]=null; return; }
+  stepMatches("find:"+q, $("findCount"), findMatches(MODEL,q));
 }
 
 function buildMarks(){
@@ -590,7 +982,7 @@ function buildMarks(){
       else gotoPara(mk.pi+1);
     }));
   }
-  $("marksNote").innerHTML="GalleyLeo flags only what it can be sure of: doubled words, spacing, unclosed quotes, runaway length. Nuanced grammar &mdash; agreement, tense drift, dangling modifiers &mdash; still wants a human read.";
+  $("marksNote").innerHTML="GalleyLeo flags only what it can be sure of: doubled words, spacing, comma-vs-period in dialogue tags, missing end punctuation, unclosed quotes, runaway length. Nuanced grammar &mdash; agreement, tense drift, dangling modifiers &mdash; still wants a human read.";
 }
 
 function buildConfusables(){
@@ -601,21 +993,21 @@ function buildConfusables(){
     if(present.length>=2 || (present.length===1 && group.some(g=>g.includes("'")))){
       if(present.reduce((a,o)=>a+o.idxs.length,0)===0) return;
       blocks.push(`<div class="gx-confrow"><span class="pair">${esc(group.join(" / "))}</span>`+
-        present.map(o=>`<button class="gx-pill" data-idxs="${o.idxs.join(',')}">${esc(o.w)} <b>${o.idxs.length}</b></button>`).join("")+
+        present.map(o=>`<button class="gx-pill" title="Step through each use" data-idxs="${o.idxs.join(',')}">${esc(o.w)} <b>${o.idxs.length}</b></button>`).join("")+
         `</div>`);
     }
   });
   if(!blocks.length){ $("confCard").classList.add("hidden"); return; }
   $("confCard").classList.remove("hidden");
   host.innerHTML=blocks.join("");
-  host.querySelectorAll(".gx-pill").forEach(p=>p.addEventListener("click",()=>{
-    const idxs=p.dataset.idxs.split(",").map(Number); highlightWordSet(idxs);
-  }));
+  host.querySelectorAll(".gx-pill").forEach(p=>p.addEventListener("click",()=>stepWord(p)));
 }
 
 /* ---------------- highlight + navigation ---------------- */
 function clearHL(){
   document.querySelectorAll(".hl-s,.hl-w,.hl-p").forEach(el=>el.classList.remove("hl-s","hl-w","hl-p"));
+  const strip=$("strip"); if(strip) strip.querySelectorAll(".gx-bar.on").forEach(b=>b.classList.remove("on"));
+  SEL.clear(); SEL_ANCHOR=null; updateSelInfo();
 }
 function scrollIn(el){
   if(!el) return;
@@ -623,59 +1015,194 @@ function scrollIn(el){
   const top=el.getBoundingClientRect().top - ms.getBoundingClientRect().top + ms.scrollTop - ms.clientHeight/2.4;
   ms.scrollTo({top,behavior:reduced?"auto":"smooth"});
 }
-function gotoSentence(gsi){ clearHL(); const el=$("s"+gsi); if(el){el.classList.add("hl-s"); scrollIn(el);} }
+function gotoSentence(gsi){ clearHL(); const el=$("s"+gsi), bar=barEl(gsi);
+  if(bar) bar.classList.add("on");
+  if(el){ el.classList.add("hl-s"); scrollIn(el); }
+  if(bar) scrollStripToBars([bar]); }
 function gotoWord(gwi){ clearHL(); const el=$("w"+gwi); if(el){el.classList.add("hl-w"); scrollIn(el);} }
 function gotoPara(pn){ clearHL(); const el=$("p"+pn); if(el){el.classList.add("hl-p"); scrollIn(el);} }
-function highlightWord(norm){
+function stepFreq(row){
+  const els=document.querySelectorAll(`.gx-w[data-w="${CSS.escape(row.dataset.w)}"]`);
+  if(!els.length) return;
+  let cur=parseInt(row.dataset.cursor,10);
+  cur=isNaN(cur)?0:(cur+1)%els.length;
+  row.dataset.cursor=cur;
   clearHL();
-  const els=document.querySelectorAll(`.gx-w[data-w="${CSS.escape(norm)}"]`);
-  els.forEach(e=>e.classList.add("hl-w"));
-  if(els[0]) scrollIn(els[0]);
+  els[cur].classList.add("hl-w");
+  scrollIn(els[cur]);
+  const ct=row.querySelector(".ct");
+  if(ct) ct.textContent=(cur+1)+"/"+els.length;
 }
-function highlightWordSet(idxs){
+function stepWord(pill){
+  const idxs=pill.dataset.idxs.split(",").map(Number).filter(n=>!isNaN(n));
+  if(!idxs.length) return;
+  let cur=parseInt(pill.dataset.cursor,10);
+  cur=isNaN(cur)?0:(cur+1)%idxs.length;   // first click -> first use; then advance, wrapping
+  pill.dataset.cursor=cur;
   clearHL();
-  let first=null;
-  idxs.forEach(i=>{ const e=$("w"+i); if(e){ e.classList.add("hl-w"); if(!first)first=e; }});
-  if(first) scrollIn(first);
+  const el=$("w"+idxs[cur]);
+  if(el){ el.classList.add("hl-w"); scrollIn(el); }
+  const b=pill.querySelector("b");
+  if(b) b.textContent=(cur+1)+"/"+idxs.length;   // show position in the cycle
 }
-function highlightOpener(norm){
+function stepOpener(row){
+  const list=OPENER_MAP.get(row.dataset.o)||[];
+  if(!list.length) return;
+  let cur=parseInt(row.dataset.cursor,10);
+  cur=isNaN(cur)?0:(cur+1)%list.length;
+  row.dataset.cursor=cur;
   clearHL();
-  const idxs=OPENER_MAP.get(norm)||[];
-  let first=null;
-  idxs.forEach(gsi=>{
-    const s=$("s"+gsi); if(s){ s.classList.add("hl-s"); if(!first)first=s; }
-    const rec=MODEL.sentences[gsi];
-    if(rec && rec.wordIdxs.length){ const w=$("w"+rec.wordIdxs[0]); if(w) w.classList.add("hl-w"); }
-  });
-  if(first) scrollIn(first);
+  const gsi=list[cur], s=$("s"+gsi);
+  if(s){ s.classList.add("hl-s"); scrollIn(s); }
+  const rec=MODEL.sentences[gsi];
+  if(rec && rec.wordIdxs.length){ const w=$("w"+rec.wordIdxs[0]); if(w) w.classList.add("hl-w"); }
+  const ct=row.querySelector(".ct");
+  if(ct) ct.textContent=(cur+1)+"/"+list.length;
+}
+
+/* ---------------- copy report ---------------- */
+function flashCopy(msg){ const b=$("copyBtn"); const o=b.dataset.label||b.textContent; b.dataset.label=o; b.textContent=msg; setTimeout(()=>{b.textContent=o;},1400); }
+function copyReport(){
+  if(!MODEL) return;
+  const lens=MODEL.sentences.map(s=>s.lengthWords).filter(n=>n>0);
+  const mean=lens.length?(MODEL.totalWords/lens.length):0;
+  const ot=openerTypes(MODEL), otT=Object.values(ot).reduce((a,b)=>a+b,0)||1;
+  const wk=listBySet(MODEL,WEAKENERS).slice(0,8).map(([w,a])=>w+" ("+a.length+")");
+  const ad=listAdverbs(MODEL).slice(0,8).map(([w,a])=>w+" ("+a.length+")");
+  const lines=[
+    "GALLEYLEO REPORT",
+    "",
+    "Words: "+MODEL.totalWords,
+    "Sentences: "+MODEL.sentences.length,
+    "Paragraphs: "+MODEL.paras.length,
+    "Unique words: "+MODEL.freq.size,
+    "Avg sentence: "+mean.toFixed(1)+" words (median "+median(lens)+", longest "+Math.max(0,...lens)+")",
+    "Dialogue: "+(dialogueRatio(MODEL)*100).toFixed(0)+"% of words",
+    "",
+    "Openers: "+["Pronoun","Article","Dialogue","-ing","Conjunction","Other"].map(k=>(k==="Article"?'"The/A"':k)+" "+Math.round(ot[k]/otT*100)+"%").join(", "),
+    "",
+    "Top filter words: "+(wk.join(", ")||"none"),
+    "Top adverbs: "+(ad.join(", ")||"none"),
+    "Close echoes: "+detectEchoes(MODEL).length,
+    "Proofing marks: "+MARKS.length
+  ];
+  const text=lines.join("\n");
+  const done=()=>flashCopy("Copied \u2713");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  } else fallbackCopy(text,done);
+}
+function fallbackCopy(text,done){
+  const t=document.createElement("textarea"); t.value=text;
+  t.style.position="fixed"; t.style.opacity="0"; document.body.appendChild(t); t.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ flashCopy("Copy failed"); }
+  document.body.removeChild(t);
+}
+
+/* ---------------- watchlist add ---------------- */
+function addWatch(){
+  const v=$("watchInput").value.trim(); if(!v) return;
+  if(!WATCHLIST.some(t=>t.toLowerCase()===v.toLowerCase())) WATCHLIST.push(v);
+  $("watchInput").value=""; renderWatchlist();
+}
+
+/* ---------------- version compare ---------------- */
+function meanLen(m){ const n=m.sentences.filter(s=>s.lengthWords>0).length; return n?m.totalWords/n:0; }
+function longest(m){ return Math.max(0,...m.sentences.map(s=>s.lengthWords)); }
+function totalOf(list){ return list.reduce((a,e)=>a+e[1].length,0); }
+function statRow(label,a,b,fmt){
+  const fa=fmt?fmt(a):a.toLocaleString(), fb=fmt?fmt(b):b.toLocaleString();
+  const d=b-a, arrow=d===0?"\u2192":(d>0?"\u2191":"\u2193");
+  const delta=d===0?"no change":((d>0?"+":"")+(fmt?fmt(d):d.toLocaleString()));
+  return `<tr><td>${label}</td><td>${fa}</td><td>${fb}</td><td class="d">${arrow} ${esc(delta)}</td></tr>`;
+}
+function buildCompareTable(A,B){
+  const rows=[
+    ["Words",A.totalWords,B.totalWords,null],
+    ["Sentences",A.sentences.length,B.sentences.length,null],
+    ["Paragraphs",A.paras.length,B.paras.length,null],
+    ["Unique words",A.freq.size,B.freq.size,null],
+    ["Avg sentence",meanLen(A),meanLen(B),v=>v.toFixed(1)],
+    ["Longest sentence",longest(A),longest(B),null],
+    ["Dialogue",dialogueRatio(A)*100,dialogueRatio(B)*100,v=>v.toFixed(0)+"%"],
+    ["Adverbs",totalOf(listAdverbs(A)),totalOf(listAdverbs(B)),null],
+    ["Filter words",totalOf(listBySet(A,WEAKENERS)),totalOf(listBySet(B,WEAKENERS)),null],
+    ["Close echoes",detectEchoes(A).length,detectEchoes(B).length,null]
+  ];
+  $("compareBody").innerHTML=
+    `<table class="gx-cmptable"><thead><tr><th></th><th>Earlier</th><th>Revised</th><th>Change</th></tr></thead><tbody>`+
+    rows.map(r=>statRow(r[0],r[1],r[2],r[3])).join("")+
+    `</tbody></table><p class="gx-note">Directions only &mdash; whether a shift is an improvement is yours to judge. Analyze either draft on its own for the full breakdown with line-level links.</p>`;
+}
+function runCompare(){
+  const t1=$("ta").value, t2=$("ta2").value;
+  if(!t1.trim()){ $("ta").focus(); return; }
+  if(!t2.trim()){ $("ta2").focus(); return; }
+  buildCompareTable(analyze(t1),analyze(t2));
+  $("inputView").classList.add("hidden");
+  $("compareView").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
 }
 
 /* ============================ WIRING ============================ */
-$("goBtn").addEventListener("click",run);
+$("goBtn").addEventListener("click",()=>{ if($("compareToggle").checked) runCompare(); else run(); });
 $("ta").addEventListener("input",()=>{
   const n=($("ta").value.match(WORD_RE)||[]).length;
   $("liveCount").textContent=n.toLocaleString()+" word"+(n===1?"":"s");
   $("bigHint").textContent = n>25000 ? "large text \u2014 give it a second" : "";
 });
-$("ta").addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") run(); });
-$("clearBtn").addEventListener("click",()=>{ $("ta").value=""; $("ta").dispatchEvent(new Event("input")); $("ta").focus(); });
+$("ta").addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ if($("compareToggle").checked) runCompare(); else run(); } });
+$("ta2").addEventListener("input",()=>{
+  const n=($("ta2").value.match(WORD_RE)||[]).length;
+  $("liveCount2").textContent=n.toLocaleString()+" word"+(n===1?"":"s");
+});
+$("clearBtn").addEventListener("click",()=>{
+  $("ta").value=""; $("ta").dispatchEvent(new Event("input"));
+  $("ta2").value=""; $("ta2").dispatchEvent(new Event("input"));
+  $("ta").focus();
+});
+$("compareToggle").addEventListener("change",e=>{
+  const on=e.target.checked;
+  $("ta2Block").classList.toggle("hidden",!on);
+  $("taLabel1").textContent = on ? "Earlier draft" : "";
+  $("goBtn").textContent = on ? "Compare" : "Analyze";
+  if(on) $("ta2").focus();
+});
 $("backBtn").addEventListener("click",()=>{
   $("resultsView").classList.add("hidden"); $("inputView").classList.remove("hidden");
   FREQ_SORTED=null; window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
 });
+$("backBtn2").addEventListener("click",()=>{
+  $("compareView").classList.add("hidden"); $("inputView").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
+});
+$("copyBtn").addEventListener("click",copyReport);
+$("watchAdd").addEventListener("click",addWatch);
+$("watchInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addWatch(); } });
+$("findInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); runFind(); } });
+document.addEventListener("mousemove",onStripDrag);
+document.addEventListener("mouseup",onStripUp);
+$("selClear").addEventListener("click",clearSelection);
 $("fnToggle").addEventListener("click",()=>{
   hideFn=!hideFn; $("fnToggle").classList.toggle("active",hideFn);
   $("fnToggle").textContent=hideFn?"Hide function words":"Show all words";
   $("wordSearch").value=""; buildFreq();
 });
 $("wordSearch").addEventListener("input",e=>buildFreq(e.target.value.trim()));
-$("sampleBtn").addEventListener("click",()=>{ $("ta").value=SAMPLE; $("ta").dispatchEvent(new Event("input")); run(); });
-$("fileInput").addEventListener("change",e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=ev=>{ $("ta").value=ev.target.result; $("ta").dispatchEvent(new Event("input")); $("ta").focus(); };
-  r.readAsText(f);
+$("sampleBtn").addEventListener("click",()=>{
+  if($("compareToggle").checked){ $("compareToggle").checked=false; $("compareToggle").dispatchEvent(new Event("change")); }
+  $("ta").value=SAMPLE; $("ta").dispatchEvent(new Event("input")); run();
 });
+function loadFileInto(input, textarea){
+  const f=input.files[0];
+  input.value="";              // reset so selecting the same file again refires "change"
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ textarea.value=ev.target.result; textarea.dispatchEvent(new Event("input")); textarea.focus(); };
+  r.readAsText(f);
+}
+$("fileInput").addEventListener("change",()=>loadFileInto($("fileInput"),$("ta")));
+$("fileInput2").addEventListener("change",()=>loadFileInto($("fileInput2"),$("ta2")));
 
 const SAMPLE=`The forge had gone cold by the time Ren came down. He stood in the doorway and looked at the anvil. He did not touch it. The iron was just iron now, grey and patient and meaning nothing at all.
 
