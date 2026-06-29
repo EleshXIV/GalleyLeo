@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GalleyLeo — manuscript metrics &amp; proofing marks</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#171a21">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Galley">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --desk:#171a21; --desk2:#1e222b; --line:#2b313c; --line2:#39414f;
+    --leaf:#e8e9e3; --leaf-line:#d3d5cb; --ink:#23262c; --ink-soft:#5b626d;
+    --pencil:#2f6fa6; --pencil-soft:#7aa3ca; --pencil-dim:rgba(47,111,166,.16);
+    --brick:#c05a4d; --brick-soft:#d98c82; --brick-dim:rgba(192,90,77,.18);
+    --txt:#e0e3e8; --txt-soft:#99a1ae; --txt-faint:#6b7280;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--desk); color:var(--txt); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px);
+    background-size:100% 3px;
+  }
+  ::selection{background:var(--pencil);color:#fff}
+
+  .gx-shell{max-width:1240px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  .gx-head{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;
+    padding:30px 0 22px;border-bottom:1px solid var(--line)}
+  .gx-mark{font-family:var(--serif);font-weight:500;font-size:34px;letter-spacing:.01em;line-height:1}
+  .gx-mark b{color:var(--pencil-soft);font-weight:500}
+  .gx-tag{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--txt-faint)}
+  .gx-rule{flex:1;height:1px;background:var(--line);min-width:20px;align-self:center}
+
+  /* ---------- input view ---------- */
+  .gx-input{padding:34px 0 60px}
+  .gx-lead{max-width:640px;margin:0 0 22px}
+  .gx-lead h1{font-family:var(--serif);font-weight:400;font-size:27px;line-height:1.25;margin:0 0 10px;color:#f2f4f7}
+  .gx-lead p{margin:0;color:var(--txt-soft);font-size:15px}
+  .gx-ta-wrap{position:relative;border:1px solid var(--line2);border-radius:4px;background:var(--desk2);
+    transition:border-color .15s}
+  .gx-ta-wrap:focus-within{border-color:var(--pencil)}
+  .gx-ta{width:100%;min-height:320px;resize:vertical;border:0;outline:0;background:transparent;
+    color:#eef0f3;font-family:var(--serif);font-size:17px;line-height:1.7;padding:22px 22px 46px}
+  .gx-ta::placeholder{color:var(--txt-faint)}
+  .gx-counter{position:absolute;right:14px;bottom:12px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.08em;color:var(--txt-faint);pointer-events:none}
+  .gx-tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  .gx-btn{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    border:1px solid var(--line2);background:transparent;color:var(--txt);padding:11px 18px;border-radius:3px;
+    cursor:pointer;transition:all .14s}
+  .gx-btn:hover{border-color:var(--pencil-soft);color:#fff}
+  .gx-btn:focus-visible{outline:2px solid var(--pencil);outline-offset:2px}
+  .gx-btn--go{background:var(--pencil);border-color:var(--pencil);color:#fff;font-weight:500}
+  .gx-btn--go:hover{background:#3a7fbd;border-color:#3a7fbd}
+  .gx-btn--ghost{border-color:transparent;color:var(--txt-soft)}
+  .gx-btn--ghost:hover{color:#fff;border-color:transparent}
+  .gx-hint{font-family:var(--mono);font-size:11px;color:var(--txt-faint);margin-left:auto;letter-spacing:.05em}
+
+  /* ---------- results view ---------- */
+  .gx-results{padding:26px 0 80px}
+  .gx-backbar{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+  .gx-backbar h2{font-family:var(--serif);font-weight:400;font-size:20px;margin:0;color:#eef0f3}
+
+  .gx-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:26px}
+  .gx-metric{background:var(--desk2);padding:16px 16px 14px}
+  .gx-metric .v{font-family:var(--mono);font-size:25px;font-weight:500;color:var(--pencil-soft);line-height:1}
+  .gx-metric .v small{font-size:13px;color:var(--txt-soft);font-weight:400}
+  .gx-metric .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--txt-faint);margin-top:9px}
+
+  .gx-card{background:var(--desk2);border:1px solid var(--line);border-radius:5px;padding:20px 22px;margin-bottom:20px}
+  .gx-card > h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--pencil-soft);margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .gx-card > .sub{font-size:12.5px;color:var(--txt-faint);margin:0 0 16px}
+
+  /* signature: sentence rhythm strip */
+  .gx-rhythm-stats{display:flex;gap:26px;flex-wrap:wrap;margin:2px 0 16px}
+  .gx-rs{font-family:var(--mono);font-size:12px;color:var(--txt-soft)}
+  .gx-rs b{color:#eef0f3;font-weight:500;font-size:15px}
+  .gx-strip-scroll{overflow-x:auto;padding-bottom:10px}
+  .gx-strip{display:flex;align-items:flex-end;gap:2px;height:104px;min-width:min-content;
+    border-bottom:1px solid var(--line2);padding-bottom:0}
+  .gx-bar{width:7px;flex:0 0 7px;background:var(--pencil);border-radius:1px 1px 0 0;cursor:pointer;
+    opacity:.82;transition:opacity .12s,transform .12s;transform-origin:bottom}
+  .gx-bar:hover{opacity:1;transform:scaleY(1.04)}
+  .gx-bar.frag{background:var(--brick)}
+  .gx-bar.on{opacity:1;outline:2px solid #fff;outline-offset:0}
+  .gx-legend{display:flex;gap:18px;margin-top:12px;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.06em;color:var(--txt-faint);text-transform:uppercase}
+  .gx-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+  /* two-column layout */
+  .gx-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:20px;align-items:start}
+  .gx-col{min-width:0}
+  .gx-col--text{position:sticky;top:18px}
+
+  /* freq + openers tables */
+  .gx-toggle-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+  .gx-search{flex:1;min-width:120px;font-family:var(--mono);font-size:13px;background:var(--desk);
+    border:1px solid var(--line2);color:#eef0f3;padding:9px 12px;border-radius:3px;outline:0}
+  .gx-search:focus{border-color:var(--pencil)}
+  .gx-mini{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--line2);background:transparent;color:var(--txt-soft);padding:8px 12px;
+    border-radius:3px;cursor:pointer;transition:all .14s;white-space:nowrap}
+  .gx-mini.active{border-color:var(--pencil);color:#fff;background:var(--pencil-dim)}
+  .gx-mini:focus-visible{outline:2px solid var(--pencil);outline-offset:2px}
+
+  .gx-rows{display:flex;flex-direction:column;gap:1px;max-height:340px;overflow-y:auto}
+  .gx-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;
+    padding:7px 10px;border-radius:3px;cursor:pointer;background:transparent;transition:background .12s;
+    text-align:left;border:0;color:inherit;width:100%;font-family:inherit}
+  .gx-row:hover{background:var(--pencil-dim)}
+  .gx-row:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
+  .gx-row .term{display:flex;align-items:center;gap:11px;min-width:0}
+  .gx-row .word{font-family:var(--serif);font-size:16px;color:#eef0f3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gx-row .barwrap{position:relative;height:5px;flex:1;min-width:30px;background:var(--line);border-radius:3px;overflow:hidden}
+  .gx-row .barfill{position:absolute;inset:0 auto 0 0;background:var(--pencil-soft);border-radius:3px}
+  .gx-row .ct{font-family:var(--mono);font-size:13px;color:var(--txt-soft);font-weight:500}
+  .gx-empty{font-family:var(--mono);font-size:12px;color:var(--txt-faint);padding:8px 2px}
+
+  /* openers sequence chips */
+  .gx-seq{display:flex;flex-wrap:wrap;gap:5px;max-height:150px;overflow-y:auto;margin-top:14px;
+    padding-top:14px;border-top:1px solid var(--line)}
+  .gx-chip{font-family:var(--mono);font-size:11px;color:var(--txt-soft);background:var(--desk);
+    border:1px solid var(--line);padding:3px 8px;border-radius:3px;cursor:pointer;transition:all .12s}
+  .gx-chip:hover{border-color:var(--pencil-soft);color:#fff}
+  .gx-chip.rep{color:var(--brick-soft);border-color:rgba(192,90,77,.4)}
+  .gx-seq-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--txt-faint);width:100%;margin-bottom:2px}
+
+  /* proofing list */
+  .gx-marks{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
+  .gx-mk{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 12px;background:var(--desk);
+    border:1px solid var(--line);border-left:2px solid var(--brick);border-radius:3px;cursor:pointer;
+    text-align:left;color:inherit;font-family:inherit;transition:background .12s}
+  .gx-mk:hover{background:var(--brick-dim)}
+  .gx-mk:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
+  .gx-mk.soft{border-left-color:var(--pencil-soft)}
+  .gx-mk .ref{font-family:var(--mono);font-size:11px;color:var(--txt-faint);padding-top:2px;white-space:nowrap}
+  .gx-mk .msg{font-size:13.5px;color:var(--txt)}
+  .gx-mk .msg em{font-family:var(--serif);font-style:italic;color:#fff}
+  .gx-mk .kind{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--brick-soft);display:block;margin-top:3px}
+  .gx-mk.soft .kind{color:var(--pencil-soft)}
+  .gx-allclear{font-family:var(--serif);font-size:15px;color:var(--txt-soft);padding:6px 2px;font-style:italic}
+
+  .gx-note{font-size:12px;color:var(--txt-faint);margin-top:14px;line-height:1.55;
+    padding-top:12px;border-top:1px solid var(--line)}
+
+  /* confusables */
+  .gx-conf{display:flex;flex-direction:column;gap:6px}
+  .gx-confrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 4px;border-bottom:1px solid var(--line)}
+  .gx-confrow:last-child{border-bottom:0}
+  .gx-confrow .pair{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-faint);flex-basis:100%}
+  .gx-pill{font-family:var(--serif);font-size:14px;color:#eef0f3;background:var(--desk);border:1px solid var(--line2);
+    padding:3px 10px;border-radius:14px;cursor:pointer;transition:all .12s;display:inline-flex;gap:7px;align-items:center}
+  .gx-pill:hover{border-color:var(--pencil-soft)}
+  .gx-pill b{font-family:var(--mono);font-size:12px;color:var(--pencil-soft);font-weight:600}
+
+  /* manuscript */
+  .gx-ms{background:var(--leaf);color:var(--ink);border:1px solid var(--leaf-line);border-radius:5px;
+    padding:8px 8px 8px 0;max-height:78vh;overflow-y:auto}
+  .gx-ms-head{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:#8b8f86;padding:14px 26px 12px 64px;border-bottom:1px solid var(--leaf-line);
+    position:sticky;top:0;background:var(--leaf);z-index:2}
+  .gx-p{position:relative;padding:4px 26px 4px 64px;font-family:var(--serif);font-size:17px;line-height:1.74;
+    transition:background .2s}
+  .gx-p:first-of-type{padding-top:14px}
+  .gx-pn{position:absolute;left:0;width:50px;text-align:right;font-family:var(--mono);font-size:10px;
+    color:#a7aaa0;padding-top:8px;user-select:none}
+  .gx-p.hl-p{background:var(--pencil-dim);box-shadow:inset 3px 0 0 var(--pencil)}
+  .gx-s{transition:background .15s;border-radius:2px}
+  .gx-s.hl-s{background:rgba(47,111,166,.20);box-shadow:0 0 0 2px rgba(47,111,166,.20)}
+  .gx-w{transition:background .12s;border-radius:2px}
+  .gx-w.hl-w{background:var(--brick);color:#fff;padding:0 1px;box-shadow:0 0 0 1px var(--brick)}
+
+  .gx-foot{padding:22px 0 30px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.08em;color:var(--txt-faint);text-align:center}
+
+  .hidden{display:none !important}
+
+  @media (max-width:960px){
+    .gx-metrics{grid-template-columns:repeat(3,1fr)}
+    .gx-grid{grid-template-columns:1fr}
+    .gx-col--text{position:static}
+    .gx-ms{max-height:60vh}
+  }
+  @media (max-width:520px){
+    .gx-shell{padding:0 16px}
+    .gx-metrics{grid-template-columns:repeat(2,1fr)}
+    .gx-mark{font-size:28px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;scroll-behavior:auto !important}
+    .gx-bar:hover{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="gx-shell">
+  <header class="gx-head">
+    <div class="gx-mark">Galley<b>Leo</b></div>
+    <span class="gx-tag">manuscript metrics &middot; proofing marks</span>
+    <span class="gx-rule"></span>
+  </header>
+
+  <!-- INPUT VIEW -->
+  <main class="gx-input" id="inputView">
+    <div class="gx-lead">
+      <h1>Paste a chapter, a scene, or the whole draft.</h1>
+      <p>GalleyLeo measures every sentence, tallies the words, charts the rhythm, and marks the mechanics &mdash; then links each finding straight back to the line it came from.</p>
+    </div>
+    <div class="gx-ta-wrap">
+      <textarea id="ta" class="gx-ta" spellcheck="false" placeholder="The hammer fell. Iron rang against iron, and Ren did not look up&hellip;"></textarea>
+      <div class="gx-counter" id="liveCount">0 words</div>
+    </div>
+    <div class="gx-tools">
+      <button class="gx-btn gx-btn--go" id="goBtn">Analyze</button>
+      <button class="gx-btn" id="sampleBtn">Load sample</button>
+      <label class="gx-btn" for="fileInput" style="display:inline-flex;align-items:center">Open .txt
+        <input type="file" id="fileInput" accept=".txt,.md,text/plain" class="hidden"></label>
+      <button class="gx-btn gx-btn--ghost" id="clearBtn">Clear</button>
+      <span class="gx-hint" id="bigHint"></span>
+    </div>
+  </main>
+
+  <!-- RESULTS VIEW -->
+  <main class="gx-results hidden" id="resultsView">
+    <div class="gx-backbar">
+      <button class="gx-btn" id="backBtn">&larr; New text</button>
+      <h2>Reading</h2>
+    </div>
+
+    <div class="gx-metrics" id="metrics"></div>
+
+    <!-- signature -->
+    <section class="gx-card">
+      <h3>Sentence rhythm</h3>
+      <p class="sub">Each mark is one sentence; its height is the word count. Hover to read it, click to find it below.</p>
+      <div class="gx-rhythm-stats" id="rhythmStats"></div>
+      <div class="gx-strip-scroll"><div class="gx-strip" id="strip"></div></div>
+      <div class="gx-legend">
+        <span><i style="background:var(--pencil)"></i>sentence</span>
+        <span><i style="background:var(--brick)"></i>fragment &le;4 words</span>
+      </div>
+    </section>
+
+    <div class="gx-grid">
+      <div class="gx-col">
+        <section class="gx-card">
+          <h3>Word frequency</h3>
+          <p class="sub">Your tally, most-used first. Click any word to light up every place it appears.</p>
+          <div class="gx-toggle-row">
+            <input type="text" id="wordSearch" class="gx-search" placeholder="look up a word&hellip;">
+            <button class="gx-mini active" id="fnToggle">Hide function words</button>
+          </div>
+          <div class="gx-rows" id="freqRows"></div>
+        </section>
+
+        <section class="gx-card">
+          <h3>Sentence openers</h3>
+          <p class="sub">The first word of every sentence. Repeats are where prose starts to feel mechanical.</p>
+          <div class="gx-rows" id="openerRows" style="max-height:240px"></div>
+          <div class="gx-seq" id="openerSeq"></div>
+        </section>
+
+        <section class="gx-card">
+          <h3>Proofing marks</h3>
+          <p class="sub">Mechanical issues only &mdash; the things a regex can catch with confidence.</p>
+          <div class="gx-marks" id="marks"></div>
+          <p class="gx-note" id="marksNote"></p>
+        </section>
+
+        <section class="gx-card" id="confCard">
+          <h3>Confusables to scan</h3>
+          <p class="sub">Not errors &mdash; just commonly-swapped pairs worth an eye. Click a count to inspect each use.</p>
+          <div class="gx-conf" id="conf"></div>
+        </section>
+      </div>
+
+      <div class="gx-col gx-col--text">
+        <section class="gx-card" style="padding:0;overflow:hidden">
+          <div class="gx-ms" id="ms">
+            <div class="gx-ms-head">The manuscript &middot; &para; marks the paragraph</div>
+            <div id="msBody"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="gx-foot">GALLEYLEO &middot; everything runs in your browser &middot; nothing leaves this page</footer>
+</div>
+
+<script>
+"use strict";
+/* ============================ ANALYSIS CORE ============================ */
+const ABBREV = new Set("mr mrs ms dr prof sr jr st vs etc mt fig no gen col sgt lt capt rev hon jan feb mar apr jun jul aug sep sept oct nov dec ave blvd ft inc ltd co dept est min max approx".split(" "));
+const OPEN_QUOTE = new Set(["\u201C","\u2018",'"',"'"]);
+const CLOSE_PUNCT = new Set(["\u201D","\u2019",'"',")","]","}"]);
+const TERMINAL = new Set([".","!","?","\u2026"]);
+const isUpper = c => c>="A" && c<="Z";
+const isDigit = c => c>="0" && c<="9";
+const isWordChar = c => /[\p{L}\p{N}]/u.test(c);
+const WORD_RE = /[\p{L}\p{N}]+(?:['\u2019\-][\p{L}\p{N}]+)*/gu;
+const normWord = w => w.toLowerCase().replace(/\u2019/g,"'");
+
+const STOP = new Set("the a an and or but nor for so yet of to in on at by with from as into onto upon over under above below is are was were be been being am do does did have has had having will would shall should can could may might must not no this that these those it its it's he she they them him her his hers their theirs we us our ours you your yours i me my mine if then than too very just about up down out off then there here who whom whose which what when where why how all any both each few more most other some such only own same s t".split(" "));
+
+function splitParagraphs(text){
+  return text.replace(/\r\n/g,"\n").replace(/\r/g,"\n").split(/\n+/).filter(s=>s.trim().length>0);
+}
+function splitSentences(para){
+  const n=para.length, out=[]; let start=0, i=0;
+  while(i<n){
+    const c=para[i];
+    if(TERMINAL.has(c)){
+      let j=i; while(j<n && TERMINAL.has(para[j])) j++;
+      const loneDot=(j-i===1 && para[i]===".");
+      while(j<n && CLOSE_PUNCT.has(para[j])) j++;
+      let suppress=false;
+      if(loneDot){
+        let k=i-1,w=""; while(k>=0 && isWordChar(para[k])){w=para[k]+w;k--;}
+        if(w.length===1 && /[A-Za-z]/.test(w)) suppress=true;
+        else if(ABBREV.has(w.toLowerCase())) suppress=true;
+        if(i-1>=0 && isDigit(para[i-1]) && j<n && isDigit(para[j])) suppress=true;
+      }
+      let w2=j; while(w2<n && /\s/.test(para[w2])) w2++;
+      const hadSpace=(w2>j), atEnd=(w2>=n), nx=atEnd?"":para[w2];
+      const opener = atEnd || (hadSpace && (isUpper(nx)||OPEN_QUOTE.has(nx)||isDigit(nx)||nx==="\u2014"||nx==="\u2013"||nx==="("));
+      if(opener && !suppress){ out.push(para.slice(start,w2)); start=w2; i=w2; continue; }
+      i=j; continue;
+    }
+    i++;
+  }
+  if(start<n) out.push(para.slice(start));
+  return out.length?out:[para];
+}
+
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* Build the full model + manuscript HTML in one pass */
+function analyze(text){
+  const paras = splitParagraphs(text);
+  const sentences=[];      // {gsi, pi, lengthWords, firstWord, wordIdxs:[gwi]}
+  const allWords=[];       // {gwi, gsi, pi, norm, orig}
+  const freq=new Map();
+  let html="", gsi=0, gwi=0;
+
+  paras.forEach((p, pi)=>{
+    const sents = splitSentences(p);
+    let pHtml="";
+    let pCursor=0; // local offset into p as we render sentences (they reconstruct p exactly)
+    sents.forEach(sent=>{
+      const sIdx=gsi++;
+      const rec={gsi:sIdx, pi, lengthWords:0, firstWord:null, wordIdxs:[]};
+      // render sentence: walk tokens, wrap words, escape gaps
+      WORD_RE.lastIndex=0;
+      let m, last=0, sHtml="";
+      while((m=WORD_RE.exec(sent))!==null){
+        sHtml += esc(sent.slice(last, m.index));
+        const orig=m[0], nrm=normWord(orig);
+        const id=gwi++;
+        sHtml += `<span class="gx-w" id="w${id}" data-w="${esc(nrm)}" data-s="${sIdx}">${esc(orig)}</span>`;
+        freq.set(nrm,(freq.get(nrm)||0)+1);
+        allWords.push({gwi:id, gsi:sIdx, pi, norm:nrm, orig});
+        rec.wordIdxs.push(id);
+        rec.lengthWords++;
+        if(rec.firstWord===null) rec.firstWord=nrm;
+        last = m.index+orig.length;
+      }
+      sHtml += esc(sent.slice(last));
+      pHtml += `<span class="gx-s" id="s${sIdx}" data-s="${sIdx}">${sHtml}</span>`;
+      sentences.push(rec);
+      pCursor += sent.length;
+    });
+    html += `<div class="gx-p" id="p${pi+1}"><span class="gx-pn">\u00B6${pi+1}</span>${pHtml}</div>`;
+  });
+
+  return {paras, sentences, allWords, freq, html, totalWords:gwi};
+}
+
+/* ---------------- proofing detectors (per paragraph, mapped to words) ---------------- */
+function proof(model, rawParas){
+  const marks=[];
+  const wordsByPara={};
+  model.allWords.forEach(w=>{ (wordsByPara[w.pi]=wordsByPara[w.pi]||[]).push(w); });
+
+  rawParas.forEach((p, pi)=>{
+    let m;
+    // repeated word (possible)
+    const rep=/\b([\p{L}]+)(\s+)(\1)\b/giu;
+    while((m=rep.exec(p))!==null){
+      const w=(wordsByPara[pi]||[]).find(x=>x.norm===normWord(m[1]));
+      marks.push({kind:"repeated word",soft:true,pi,gwi:w?w.gwi:null,
+        msg:`Doubled word &mdash; <em>${esc(m[1])} ${esc(m[3])}</em>. Intentional, or a slip?`});
+    }
+    // double space
+    if(/ {2,}/.test(p)) marks.push({kind:"spacing",soft:true,pi,gwi:null,msg:"Two or more spaces in a row."});
+    // space before punctuation
+    if(/\s[,.;:!?]/.test(p)) marks.push({kind:"spacing",soft:true,pi,gwi:null,msg:"A space sits before a punctuation mark."});
+    // missing space after sentence punctuation
+    if(/[a-z][.!?][A-Z]/.test(p)) marks.push({kind:"spacing",soft:false,pi,gwi:null,msg:"A sentence may be missing a space after its end mark."});
+    // unbalanced quotes / brackets
+    const dq=(p.match(/"/g)||[]).length;
+    const cq=(p.match(/[\u201C]/g)||[]).length, ccq=(p.match(/[\u201D]/g)||[]).length;
+    if(dq%2!==0) marks.push({kind:"quotes",soft:false,pi,gwi:null,msg:"An odd number of straight quotation marks &mdash; one may be unclosed."});
+    if(cq!==ccq) marks.push({kind:"quotes",soft:false,pi,gwi:null,msg:"Curly quotes don\u2019t pair up &mdash; an opener or closer is missing."});
+    const paren=(p.match(/\(/g)||[]).length-(p.match(/\)/g)||[]).length;
+    if(paren!==0) marks.push({kind:"brackets",soft:false,pi,gwi:null,msg:"Parentheses don\u2019t balance in this paragraph."});
+  });
+
+  // per-sentence: lowercase start (possible) + very long (review) + no terminal punctuation
+  model.sentences.forEach(s=>{
+    const first=(s.wordIdxs.length?model.allWords[ s.wordIdxs[0] ].orig:"");
+    if(first && /^[a-z]/.test(first) && s.lengthWords>0){
+      marks.push({kind:"capitalisation",soft:true,pi:s.pi,gsi:s.gsi,gwi:s.wordIdxs[0],
+        msg:`A sentence may begin lowercase &mdash; <em>${esc(first)}\u2026</em>`});
+    }
+    if(s.lengthWords>=42){
+      marks.push({kind:"length",soft:true,pi:s.pi,gsi:s.gsi,gwi:s.wordIdxs[0],
+        msg:`A ${s.lengthWords}-word sentence &mdash; long enough to re-read for control.`});
+    }
+  });
+
+  return marks;
+}
+
+/* ---------------- confusables ---------------- */
+const CONF_GROUPS=[
+  ["its","it's"],["your","you're"],["their","there","they're"],["whose","who's"],
+  ["then","than"],["affect","effect"],["lose","loose"],["to","too","two"],
+  ["lead","led"],["bated","baited"],["aloud","allowed"],["passed","past"],["weather","whether"],["principal","principle"]
+];
+
+/* ============================ STATE + RENDER ============================ */
+let MODEL=null, MARKS=null, OPENER_MAP=null, FREQ_SORTED=null, hideFn=true;
+
+const $=id=>document.getElementById(id);
+const reduced = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+function median(arr){ if(!arr.length) return 0; const a=[...arr].sort((x,y)=>x-y); const m=a.length>>1;
+  return a.length%2?a[m]:Math.round((a[m-1]+a[m])/2); }
+
+function run(){
+  const text=$("ta").value;
+  if(!text.trim()){ $("ta").focus(); return; }
+  MODEL=analyze(text);
+  MARKS=proof(MODEL, MODEL.paras);
+  buildMetrics();
+  buildRhythm();
+  buildFreq();
+  buildOpeners();
+  buildMarks();
+  buildConfusables();
+  $("msBody").innerHTML=MODEL.html;
+  $("inputView").classList.add("hidden");
+  $("resultsView").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
+}
+
+function buildMetrics(){
+  const lens=MODEL.sentences.map(s=>s.lengthWords).filter(n=>n>0);
+  const chars=$("ta").value.replace(/\s/g,"").length;
+  const uniq=MODEL.freq.size;
+  const mean=lens.length?(MODEL.totalWords/lens.length):0;
+  const read=Math.max(1,Math.round(MODEL.totalWords/230));
+  const cells=[
+    ["Words", MODEL.totalWords.toLocaleString(), ""],
+    ["Sentences", MODEL.sentences.length.toLocaleString(), ""],
+    ["Paragraphs", MODEL.paras.length.toLocaleString(), ""],
+    ["Unique words", uniq.toLocaleString(), ""],
+    ["Avg sentence", mean.toFixed(1), "words"],
+    ["Read time", read, "min"]
+  ];
+  $("metrics").innerHTML=cells.map(([l,v,u])=>
+    `<div class="gx-metric"><div class="v">${v}${u?` <small>${u}</small>`:""}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function buildRhythm(){
+  const lens=MODEL.sentences.map(s=>s.lengthWords);
+  const nz=lens.filter(n=>n>0);
+  const max=Math.max(1,...lens);
+  const frags=nz.filter(n=>n<=4).length;
+  const longs=nz.filter(n=>n>=30).length;
+  $("rhythmStats").innerHTML=[
+    ["shortest",Math.min(...(nz.length?nz:[0]))],
+    ["median",median(nz)],
+    ["mean",nz.length?(nz.reduce((a,b)=>a+b,0)/nz.length).toFixed(1):0],
+    ["longest",max],
+    ["fragments",frags],
+    ["30+ words",longs]
+  ].map(([l,v])=>`<span class="gx-rs">${l} <b>${v}</b></span>`).join("");
+
+  const strip=$("strip"); strip.innerHTML="";
+  MODEL.sentences.forEach(s=>{
+    const h=4+Math.round((s.lengthWords/max)*94);
+    const b=document.createElement("div");
+    b.className="gx-bar"+(s.lengthWords<=4?" frag":"");
+    b.style.height=h+"px";
+    b.title=`Sentence ${s.gsi+1} \u00B7 ${s.lengthWords} word${s.lengthWords===1?"":"s"}`;
+    b.dataset.s=s.gsi;
+    b.addEventListener("click",()=>{ markStripActive(s.gsi); gotoSentence(s.gsi); });
+    strip.appendChild(b);
+  });
+}
+function markStripActive(gsi){
+  $("strip").querySelectorAll(".gx-bar.on").forEach(b=>b.classList.remove("on"));
+  const b=$("strip").querySelector(`.gx-bar[data-s="${gsi}"]`); if(b) b.classList.add("on");
+}
+
+function sortedFreq(){
+  if(FREQ_SORTED) return FREQ_SORTED;
+  FREQ_SORTED=[...MODEL.freq.entries()].sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+  return FREQ_SORTED;
+}
+function buildFreq(filter){
+  const all=sortedFreq();
+  let rows=all;
+  if(hideFn) rows=rows.filter(([w])=>!STOP.has(w) && !/^\d+$/.test(w) && w.length>1);
+  if(filter){ const f=filter.toLowerCase(); rows=all.filter(([w])=>w.includes(f)); }
+  const top=rows.slice(0,60);
+  const max=top.length?top[0][1]:1;
+  const host=$("freqRows");
+  if(!top.length){ host.innerHTML=`<div class="gx-empty">No matching words.</div>`; return; }
+  host.innerHTML=top.map(([w,c])=>
+    `<button class="gx-row" data-w="${esc(w)}">
+       <span class="term"><span class="word">${esc(w)}</span>
+       <span class="barwrap"><span class="barfill" style="width:${Math.round(c/max*100)}%"></span></span></span>
+       <span class="ct">${c}</span></button>`).join("");
+  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>highlightWord(r.dataset.w)));
+}
+
+function buildOpeners(){
+  const map=new Map();
+  MODEL.sentences.forEach(s=>{ if(s.firstWord!=null){ (map.get(s.firstWord)||map.set(s.firstWord,[]).get(s.firstWord)).push(s.gsi); }});
+  OPENER_MAP=map;
+  const rows=[...map.entries()].filter(([,a])=>a.length>0).sort((a,b)=>b[1].length-a[1].length || a[0].localeCompare(b[0]));
+  const max=rows.length?rows[0][1].length:1;
+  const repeated=new Set(rows.filter(([,a])=>a.length>1).map(([w])=>w));
+  const host=$("openerRows");
+  host.innerHTML=rows.slice(0,40).map(([w,a])=>
+    `<button class="gx-row" data-o="${esc(w)}">
+       <span class="term"><span class="word">${esc(w)}</span>
+       <span class="barwrap"><span class="barfill" style="width:${Math.round(a.length/max*100)}%;background:${a.length>1?'var(--brick-soft)':'var(--pencil-soft)'}"></span></span></span>
+       <span class="ct">${a.length}</span></button>`).join("");
+  host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>highlightOpener(r.dataset.o)));
+
+  // ordered sequence of first words
+  const seq=$("openerSeq");
+  seq.innerHTML=`<span class="gx-seq-lbl">First word of each sentence, in order</span>`+
+    MODEL.sentences.map(s=>{
+      const w=s.firstWord||"\u2014";
+      const rep=repeated.has(s.firstWord)?" rep":"";
+      return `<span class="gx-chip${rep}" data-go="${s.gsi}" title="Sentence ${s.gsi+1}">${esc(w)}</span>`;
+    }).join("");
+  seq.querySelectorAll(".gx-chip").forEach(c=>c.addEventListener("click",()=>{ markStripActive(+c.dataset.go); gotoSentence(+c.dataset.go); }));
+}
+
+function buildMarks(){
+  const host=$("marks");
+  if(!MARKS.length){
+    host.innerHTML=`<div class="gx-allclear">No mechanical issues found. Clean galley.</div>`;
+  } else {
+    host.innerHTML=MARKS.map((mk,i)=>
+      `<button class="gx-mk${mk.soft?' soft':''}" data-i="${i}">
+         <span class="ref">\u00B6${mk.pi+1}</span>
+         <span class="msg">${mk.msg}<span class="kind">${mk.kind}${mk.soft?' \u00B7 review':''}</span></span>
+       </button>`).join("");
+    host.querySelectorAll(".gx-mk").forEach(b=>b.addEventListener("click",()=>{
+      const mk=MARKS[+b.dataset.i];
+      if(mk.gwi!=null) gotoWord(mk.gwi);
+      else if(mk.gsi!=null) gotoSentence(mk.gsi);
+      else gotoPara(mk.pi+1);
+    }));
+  }
+  $("marksNote").innerHTML="GalleyLeo flags only what it can be sure of: doubled words, spacing, unclosed quotes, runaway length. Nuanced grammar &mdash; agreement, tense drift, dangling modifiers &mdash; still wants a human read.";
+}
+
+function buildConfusables(){
+  const host=$("conf");
+  const blocks=[];
+  CONF_GROUPS.forEach(group=>{
+    const present=group.map(w=>({w,idxs:MODEL.allWords.filter(x=>x.norm===w).map(x=>x.gwi)})).filter(o=>o.idxs.length>0);
+    if(present.length>=2 || (present.length===1 && group.some(g=>g.includes("'")))){
+      if(present.reduce((a,o)=>a+o.idxs.length,0)===0) return;
+      blocks.push(`<div class="gx-confrow"><span class="pair">${esc(group.join(" / "))}</span>`+
+        present.map(o=>`<button class="gx-pill" data-idxs="${o.idxs.join(',')}">${esc(o.w)} <b>${o.idxs.length}</b></button>`).join("")+
+        `</div>`);
+    }
+  });
+  if(!blocks.length){ $("confCard").classList.add("hidden"); return; }
+  $("confCard").classList.remove("hidden");
+  host.innerHTML=blocks.join("");
+  host.querySelectorAll(".gx-pill").forEach(p=>p.addEventListener("click",()=>{
+    const idxs=p.dataset.idxs.split(",").map(Number); highlightWordSet(idxs);
+  }));
+}
+
+/* ---------------- highlight + navigation ---------------- */
+function clearHL(){
+  document.querySelectorAll(".hl-s,.hl-w,.hl-p").forEach(el=>el.classList.remove("hl-s","hl-w","hl-p"));
+}
+function scrollIn(el){
+  if(!el) return;
+  const ms=$("ms");
+  const top=el.getBoundingClientRect().top - ms.getBoundingClientRect().top + ms.scrollTop - ms.clientHeight/2.4;
+  ms.scrollTo({top,behavior:reduced?"auto":"smooth"});
+}
+function gotoSentence(gsi){ clearHL(); const el=$("s"+gsi); if(el){el.classList.add("hl-s"); scrollIn(el);} }
+function gotoWord(gwi){ clearHL(); const el=$("w"+gwi); if(el){el.classList.add("hl-w"); scrollIn(el);} }
+function gotoPara(pn){ clearHL(); const el=$("p"+pn); if(el){el.classList.add("hl-p"); scrollIn(el);} }
+function highlightWord(norm){
+  clearHL();
+  const els=document.querySelectorAll(`.gx-w[data-w="${CSS.escape(norm)}"]`);
+  els.forEach(e=>e.classList.add("hl-w"));
+  if(els[0]) scrollIn(els[0]);
+}
+function highlightWordSet(idxs){
+  clearHL();
+  let first=null;
+  idxs.forEach(i=>{ const e=$("w"+i); if(e){ e.classList.add("hl-w"); if(!first)first=e; }});
+  if(first) scrollIn(first);
+}
+function highlightOpener(norm){
+  clearHL();
+  const idxs=OPENER_MAP.get(norm)||[];
+  let first=null;
+  idxs.forEach(gsi=>{
+    const s=$("s"+gsi); if(s){ s.classList.add("hl-s"); if(!first)first=s; }
+    const rec=MODEL.sentences[gsi];
+    if(rec && rec.wordIdxs.length){ const w=$("w"+rec.wordIdxs[0]); if(w) w.classList.add("hl-w"); }
+  });
+  if(first) scrollIn(first);
+}
+
+/* ============================ WIRING ============================ */
+$("goBtn").addEventListener("click",run);
+$("ta").addEventListener("input",()=>{
+  const n=($("ta").value.match(WORD_RE)||[]).length;
+  $("liveCount").textContent=n.toLocaleString()+" word"+(n===1?"":"s");
+  $("bigHint").textContent = n>25000 ? "large text \u2014 give it a second" : "";
+});
+$("ta").addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") run(); });
+$("clearBtn").addEventListener("click",()=>{ $("ta").value=""; $("ta").dispatchEvent(new Event("input")); $("ta").focus(); });
+$("backBtn").addEventListener("click",()=>{
+  $("resultsView").classList.add("hidden"); $("inputView").classList.remove("hidden");
+  FREQ_SORTED=null; window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
+});
+$("fnToggle").addEventListener("click",()=>{
+  hideFn=!hideFn; $("fnToggle").classList.toggle("active",hideFn);
+  $("fnToggle").textContent=hideFn?"Hide function words":"Show all words";
+  $("wordSearch").value=""; buildFreq();
+});
+$("wordSearch").addEventListener("input",e=>buildFreq(e.target.value.trim()));
+$("sampleBtn").addEventListener("click",()=>{ $("ta").value=SAMPLE; $("ta").dispatchEvent(new Event("input")); run(); });
+$("fileInput").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{ $("ta").value=ev.target.result; $("ta").dispatchEvent(new Event("input")); $("ta").focus(); };
+  r.readAsText(f);
+});
+
+const SAMPLE=`The forge had gone cold by the time Ren came down. He stood in the doorway and looked at the anvil. He did not touch it. The iron was just iron now, grey and patient and meaning nothing at all.
+
+"You're up early," Calder said. He was already at the bellows, already sweating. "Or you never went to bed. Hard to tell with you these days."
+
+Ren said nothing. He crossed to the bench. He picked up the half-finished blade his father had left there, three days ago, before the cough took him. It was a good blade. It would have been a good blade.
+
+"You don't have to be here," Calder said, gentler now. "Nobody would think less of you."
+
+But he did have to be here. That was the whole of it. There was nowhere else that the weight of the thing would sit right, and so he stayed, and he worked, and he let the heat say the things he couldn't. The hammer fell. Iron rang against iron. And somewhere past the open door, the Concordat's banners were already moving on the road, though no one in the village had thought to look up and count them yet.`;
+
+$("ta").focus();
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+  }
+</script>
+
+</body>
+</html>
