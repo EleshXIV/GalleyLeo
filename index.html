@@ -4,14 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GalleyLeo — manuscript metrics &amp; proofing marks</title>
-
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#171a21">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Galley">
-  
 <!-- No external resources: fonts are system fonts, so this page makes zero network requests. -->
 <style>
   /* System font stacks — no downloads, no CDN, nothing leaves the browser. */
@@ -69,6 +67,7 @@
   .gx-btn--ghost{border-color:transparent;color:var(--txt-soft)}
   .gx-btn--ghost:hover{color:#fff;border-color:transparent}
   .gx-hint{font-family:var(--mono);font-size:11px;color:var(--txt-faint);margin-left:auto;letter-spacing:.05em}
+  .gx-hint.warn{color:var(--brick);font-weight:600;max-width:46ch;text-align:right;white-space:normal}
 
   /* ---------- results view ---------- */
   .gx-results{padding:26px 0 80px}
@@ -95,7 +94,7 @@
   .gx-strip-scroll{overflow-x:auto;padding-bottom:10px}
   .gx-strip{display:flex;align-items:flex-end;gap:2px;height:104px;min-width:min-content;
     border-bottom:1px solid var(--line2);padding-bottom:0;user-select:none;-webkit-user-select:none}
-  .gx-bar{width:7px;flex:0 0 7px;background:var(--pencil);border-radius:1px 1px 0 0;cursor:pointer;
+  .gx-bar{width:7px;flex:0 0 7px;background:var(--pencil);border-radius:1px 1px 0 0;cursor:pointer;-webkit-touch-callout:none;
     opacity:.82;transition:opacity .12s,transform .12s;transform-origin:bottom}
   .gx-bar:hover{opacity:1;transform:scaleY(1.04)}
   .gx-bar.frag{background:var(--brick)}
@@ -132,6 +131,11 @@
   .gx-row .barfill{position:absolute;inset:0 auto 0 0;background:var(--pencil-soft);border-radius:3px}
   .gx-row .ct{font-family:var(--mono);font-size:13px;color:var(--txt-soft);font-weight:500;text-align:right;white-space:nowrap}
   .gx-empty{font-family:var(--mono);font-size:12px;color:var(--txt-faint);padding:8px 2px}
+  .gx-loadmore{display:block;width:100%;margin:8px 0 2px;padding:9px 12px;font-family:var(--mono);font-size:12px;
+    letter-spacing:.04em;color:var(--pencil);background:transparent;border:1px dashed var(--line2);border-radius:7px;
+    cursor:pointer;transition:background .14s,border-color .14s,color .14s}
+  .gx-loadmore:hover{background:var(--line2);color:var(--txt);border-style:solid}
+  .gx-loadmore .lm-left{color:var(--txt-faint)}
 
   /* openers sequence chips */
   .gx-seq{display:flex;flex-wrap:wrap;gap:5px;max-height:150px;overflow-y:auto;margin-top:14px;
@@ -172,27 +176,81 @@
   .gx-pill:hover{border-color:var(--pencil-soft)}
   .gx-pill b{font-family:var(--mono);font-size:12px;color:var(--pencil-soft);font-weight:600}
 
+  /* sentence mood */
+  .gx-moodbar{display:flex;height:18px;border-radius:3px;overflow:hidden;background:var(--desk);border:1px solid var(--line)}
+  .mseg{display:block;min-width:2px}
+  .mseg.st{background:var(--pencil)} .mseg.qu{background:#c9a24b} .mseg.ex{background:var(--brick)}
+  .gx-moodkey{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:11px}
+  .gx-moodkey span{font-family:var(--mono);font-size:11.5px;color:var(--txt-soft);display:inline-flex;align-items:center;gap:7px}
+  .gx-moodkey b{color:#eef0f3;font-weight:600}
+  .gx-moodkey i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .gx-moodkey i.st{background:var(--pencil)} .gx-moodkey i.qu{background:#c9a24b} .gx-moodkey i.ex{background:var(--brick)}
+  .gx-mood-flag{font-size:12.5px;color:var(--brick-soft);margin-top:13px;padding-top:11px;border-top:1px solid var(--line);line-height:1.5}
+
+  /* dialogue tags */
+  .gx-dtag-stat{font-family:var(--mono);font-size:12.5px;color:var(--txt-soft);margin-bottom:14px;line-height:1.6}
+  .gx-dtag-stat b{color:var(--pencil-soft);font-weight:600} .gx-dtag-stat em{font-family:var(--serif);font-style:italic;color:#eef0f3}
+  .gx-row[data-plain] .word{color:var(--txt-soft)}
+  #dtagAdverbs{max-height:200px;flex-direction:row;flex-wrap:wrap;gap:6px}
+  #dtagAdverbs .gx-dline{width:auto;display:inline-flex;border-radius:14px;padding:4px 11px;font-size:13px}
+  #dtagAdverbs .gx-dline em{font-family:var(--serif);font-style:italic;color:var(--brick-soft);margin-left:5px}
+
+  /* dialogue-vs-narration density */
+  .gx-densitystrip .gx-dbar{background:var(--brick)}
+  .gx-densitystrip .gx-dbar:hover{background:var(--brick-soft)}
+
+  /* repeated phrases */
+  .gx-phrase-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .gx-phrase-note{font-size:11.5px;color:var(--txt-faint);line-height:1.5;flex:1;min-width:140px}
+  .gx-phraserow{height:auto;align-items:flex-start;padding-top:9px;padding-bottom:9px}
+  .gx-phraserow .term{grid-template-columns:1fr 44px;align-items:flex-start}
+  .gx-phraserow .barwrap{margin-top:7px}
+  .gx-phraserow .word{font-family:var(--serif);white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45;word-break:break-word}
+
   /* manuscript */
-  .gx-ms{background:var(--leaf);color:var(--ink);border:1px solid var(--leaf-line);border-radius:5px;
-    padding:8px 8px 8px 0;max-height:78vh;overflow-y:auto}
+  .gx-ms{--paper:var(--leaf);--paper-ink:var(--ink);--paper-line:var(--leaf-line);
+    --paper-head:#8b8f86;--paper-pn:#a7aaa0;--paper-field:#fff;
+    --paper-hlp:var(--pencil-dim);--paper-hls:rgba(47,111,166,.34);--paper-hls-edge:rgba(47,111,166,.62);
+    background:var(--paper);color:var(--paper-ink);border:1px solid var(--paper-line);border-radius:5px;
+    padding:8px 8px 8px 0;max-height:78vh;overflow-y:auto;transition:background .18s,border-color .18s}
+  .gx-ms.dark{--paper:#14171c;--paper-ink:#d7d9df;--paper-line:#2a2f38;
+    --paper-head:#727a86;--paper-pn:#5f6671;--paper-field:#1e222b;
+    --paper-hlp:rgba(47,111,166,.32);--paper-hls:rgba(96,156,214,.30);--paper-hls-edge:rgba(96,156,214,.55)}
   .gx-ms-head{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-    color:#8b8f86;padding:14px 26px 12px 64px;border-bottom:1px solid var(--leaf-line);
-    position:sticky;top:0;background:var(--leaf);z-index:2}
+    color:var(--paper-head);padding:14px 26px 12px 64px;border-bottom:1px solid var(--paper-line);
+    position:sticky;top:0;background:var(--paper);z-index:2}
+  .gx-largenote{font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--paper-head);
+    background:var(--paper-line);padding:9px 26px 9px 64px;border-bottom:1px solid var(--paper-line)}
+  .gx-largenote b{color:var(--ink)}
+  .gx-strip-note{font-family:var(--mono);font-size:12px;line-height:1.5;color:var(--txt-faint);padding:18px 6px}
+  .gx-ms-sentinel{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--paper-head);text-align:center;padding:20px 26px 30px 64px}
   .gx-p{position:relative;padding:4px 26px 4px 64px;font-family:var(--serif);font-size:17px;line-height:1.74;
     transition:background .2s}
   .gx-p:first-of-type{padding-top:14px}
   .gx-pn{position:absolute;left:0;width:50px;text-align:right;font-family:var(--mono);font-size:10px;
-    color:#a7aaa0;padding-top:8px;user-select:none}
-  .gx-p.hl-p{background:var(--pencil-dim);box-shadow:inset 3px 0 0 var(--pencil)}
+    color:var(--paper-pn);padding-top:8px;user-select:none}
+  .gx-p.hl-p{background:var(--paper-hlp);box-shadow:inset 3px 0 0 var(--pencil)}
   .gx-s{transition:background .15s;border-radius:2px}
-  .gx-s.hl-s{background:rgba(47,111,166,.20);box-shadow:0 0 0 2px rgba(47,111,166,.20)}
+  .gx-s.hl-s{background:var(--paper-hls);box-shadow:0 0 0 1.5px var(--paper-hls-edge)}
   .gx-w{transition:background .12s;border-radius:2px}
   .gx-w.hl-w{background:var(--brick);color:#fff;padding:0 1px;box-shadow:0 0 0 1px var(--brick)}
+  .gx-w.hl-s{background:var(--paper-hls);box-shadow:0 0 0 1.5px var(--paper-hls-edge)}
 
   .gx-foot{padding:22px 0 30px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;
-    letter-spacing:.08em;color:var(--txt-faint);text-align:center}
+    letter-spacing:.08em;color:var(--txt-faint);text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:5px;text-wrap:balance}
+  .gx-foot-note{max-width:560px;line-height:1.55;letter-spacing:.02em;opacity:.82;margin-top:2px}
 
   .hidden{display:none !important}
+  .gx-busy{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+    background:rgba(12,14,18,.72);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+  .gx-busy-card{display:flex;flex-direction:column;align-items:center;gap:16px;padding:30px 38px;
+    background:var(--panel,#171b22);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .gx-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line2);border-top-color:var(--pencil);
+    animation:gx-rot .8s linear infinite;will-change:transform}
+  .gx-busy-msg{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt)}
+  @keyframes gx-rot{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){ .gx-spin{animation-duration:1.6s} }
 
   /* opener-type breakdown */
   .gx-otbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:2px 0 9px;background:var(--line)}
@@ -229,10 +287,27 @@
   .gx-echo .ew{font-family:var(--serif);font-size:16px;color:#eef0f3}
   .gx-echo .ed{font-family:var(--mono);font-size:11px;color:var(--txt-faint)}
 
+  /* dialogue-only */
+  .gx-dlg-head{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+  .gx-dlg-head #dlgStat{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--txt-faint)}
+  .gx-dlg-head .gx-mini{margin-left:auto}
+  .gx-dlg{display:flex;flex-direction:column;gap:5px;max-height:360px;overflow-y:auto;padding-right:4px}
+  .gx-dline{display:block;width:100%;text-align:left;font-family:var(--serif);font-size:14.5px;line-height:1.5;
+    color:#e3e4de;background:var(--desk);border:0;border-left:2px solid var(--pencil-soft);border-radius:3px;
+    padding:8px 12px;cursor:pointer;transition:background .12s}
+  .gx-dline:hover{background:var(--pencil-dim)}
+  .gx-dline:focus-visible{outline:2px solid var(--pencil);outline-offset:-2px}
+  .gx-dlg-empty{font-family:var(--serif);font-size:14px;font-style:italic;color:var(--txt-soft);padding:4px 2px}
+
   /* find-in-text bar */
   .gx-ms-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .gx-ms-tools{display:flex;align-items:center;gap:8px}
+  .gx-msdark{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--paper-head);background:transparent;border:1px solid var(--paper-line);border-radius:3px;
+    padding:5px 9px;cursor:pointer;transition:border-color .12s,color .12s;white-space:nowrap}
+  .gx-msdark:hover{border-color:var(--pencil);color:var(--pencil)}
   .gx-find{display:flex;align-items:center;gap:8px}
-  .gx-find input{font-family:var(--mono);font-size:11px;background:#fff;border:1px solid var(--leaf-line);color:var(--ink);padding:5px 9px;border-radius:3px;outline:0;width:170px}
+  .gx-find input{font-family:var(--mono);font-size:11px;background:var(--paper-field);border:1px solid var(--paper-line);color:var(--paper-ink);padding:5px 9px;border-radius:3px;outline:0;width:170px}
   .gx-find input:focus{border-color:var(--pencil)}
   .gx-findct{font-family:var(--mono);font-size:10px;color:#8b8f86;min-width:34px}
 
@@ -267,6 +342,29 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;scroll-behavior:auto !important}
     .gx-bar:hover{transform:none}
+  }
+  /* touch devices: while a finger drags to scroll a list, each row it crosses gets
+     :hover, and the background transition fades in/out — a flickering trail that reads
+     as jagged scrolling. Drop hover feedback here (use :active for taps), keep momentum,
+     and contain overscroll so reaching a list edge doesn't jerk the whole page. */
+  @media (hover: none){
+    .gx-rows,.gx-marks,.gx-dlg,.gx-seq,.gx-monotony,.gx-strip-scroll{
+      -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+    .gx-row,.gx-mk,.gx-dline,.gx-echo,.gx-flat,.gx-chip,.gx-pill,.gx-bar{transition:none}
+    .gx-row:hover{background:transparent}
+    .gx-mk:hover{background:var(--desk)}
+    .gx-dline:hover{background:transparent}
+    .gx-echo:hover{background:var(--desk)}
+    .gx-flat:hover{background:var(--desk)}
+    .gx-chip:hover{border-color:var(--line);color:var(--txt-soft)}
+    .gx-pill:hover{border-color:var(--line2)}
+    .gx-bar:hover{transform:none}
+    .gx-densitystrip .gx-dbar:hover{background:var(--brick)}
+    .gx-row:active{background:var(--pencil-dim)}
+    .gx-mk:active{background:var(--brick-dim)}
+    .gx-dline:active{background:var(--pencil-dim)}
+    .gx-echo:active{background:rgba(196,160,74,.12)}
+    .gx-flat:active{background:var(--pencil-dim)}
   }
 </style>
 </head>
@@ -390,6 +488,13 @@
         </section>
 
         <section class="gx-card">
+          <h3>Dialogue only</h3>
+          <p class="sub">Every quoted line lifted out of the narration, in order &mdash; read the voices on their own to hear whether characters sound distinct and the exchange carries. Click a line to find it below.</p>
+          <div class="gx-dlg-head"><span id="dlgStat"></span><button class="gx-mini" id="dlgCopy">Copy all</button></div>
+          <div class="gx-dlg" id="dlgRows"></div>
+        </section>
+
+        <section class="gx-card">
           <h3>Proofing marks</h3>
           <p class="sub">Mechanical issues only &mdash; the things a regex can catch with confidence.</p>
           <div class="gx-marks" id="marks"></div>
@@ -401,15 +506,63 @@
           <p class="sub">Not errors &mdash; just commonly-swapped pairs worth an eye. Click a word to step through its uses one at a time.</p>
           <div class="gx-conf" id="conf"></div>
         </section>
+
+        <section class="gx-card" id="paraRhythmCard">
+          <h3>Paragraph rhythm</h3>
+          <p class="sub">One bar per paragraph, by word count &mdash; pacing at the structural level. Tall runs are dense blocks; short ones, quick beats. Click a bar to find it below.</p>
+          <div class="gx-rhythm-stats" id="paraRhythmStats"></div>
+          <div class="gx-strip-scroll"><div class="gx-strip" id="paraStrip"></div></div>
+        </section>
+
+        <section class="gx-card" id="moodCard">
+          <h3>Sentence mood</h3>
+          <p class="sub">The mix of statements, questions, and exclamations &mdash; mostly here to catch exclamation-point creep.</p>
+          <div class="gx-mood" id="moodBox"></div>
+        </section>
+
+        <section class="gx-card" id="namesCard">
+          <h3>Characters &amp; proper names</h3>
+          <p class="sub">Capitalised names in the prose, most-mentioned first &mdash; a quick read on who is on the page and how POV time is shared. A heuristic guide: it can miss a name only ever at a sentence start and may catch the odd place or title. Click to step through mentions.</p>
+          <div class="gx-rows" id="nameRows" style="max-height:260px"></div>
+        </section>
+
+        <section class="gx-card" id="phraseCard">
+          <h3>Repeated phrases</h3>
+          <p class="sub">Multi-word phrasings you reuse without noticing &mdash; the repeats single-word echoes can&rsquo;t catch, like an image or a beat recurring across the piece. Click a phrase to step through its uses.</p>
+          <div class="gx-phrase-head">
+            <button class="gx-mini" id="phraseRun">Find repeated phrases</button>
+            <span class="gx-phrase-note" id="phraseNote">Run on demand &mdash; it scans every 3-to-5-word run, so it&rsquo;s the one heavier pass.</span>
+          </div>
+          <div class="gx-rows" id="phraseRows" style="max-height:320px"></div>
+        </section>
+
+        <section class="gx-card" id="dtagCard">
+          <h3>Dialogue tags</h3>
+          <p class="sub">Speech verbs used to attribute dialogue. Plain tags (<em>said, asked</em>) vanish on the page; elaborate ones and adverb-laden tags draw the eye &mdash; each a candidate to weigh. Click a verb to step through its tags.</p>
+          <div class="gx-dtag-stat" id="dtagStat"></div>
+          <div class="gx-rows" id="dtagRows" style="max-height:200px"></div>
+          <div class="gx-sub-label" id="dtagAdvLabel">Adverb-modified tags <span>often the adverb is doing the verb&rsquo;s job</span></div>
+          <div class="gx-marks" id="dtagAdverbs"></div>
+        </section>
+
+        <section class="gx-card" id="densityCard">
+          <h3>Dialogue vs narration</h3>
+          <p class="sub">Where talk and description fall across the piece &mdash; taller, warmer bars are dialogue-heavy stretches; flat ones are narration. A read on pacing and where a scene goes quiet or talky. Click to jump there.</p>
+          <div class="gx-strip-scroll"><div class="gx-strip gx-densitystrip" id="densityStrip"></div></div>
+        </section>
       </div>
 
-      <div class="gx-col gx-col--text">
-        <section class="gx-card" style="padding:0;overflow:hidden">
+      <div class="gx-col gx-col--text" id="msHome">
+        <section class="gx-card" id="msCard" style="padding:0;overflow:hidden">
           <div class="gx-ms" id="ms">
             <div class="gx-ms-head">
               <span>The manuscript &middot; &para; marks the paragraph</span>
-              <span class="gx-find"><input type="text" id="findInput" placeholder="find in text &mdash; Enter to step&hellip;"><span class="gx-findct" id="findCount"></span></span>
+              <span class="gx-ms-tools">
+                <button class="gx-msdark" id="msDark" aria-pressed="false" title="Dark reading mode">Dark</button>
+                <span class="gx-find"><input type="text" id="findInput" placeholder="find in text &mdash; Enter to step&hellip;"><span class="gx-findct" id="findCount"></span></span>
+              </span>
             </div>
+            <div id="largeNote" class="gx-largenote hidden">Large-document mode &mdash; the manuscript is rendered for speed, so locating a word highlights its <b>sentence</b> rather than the single word. Every statistic is still exact.</div>
             <div id="msBody"></div>
           </div>
         </section>
@@ -417,8 +570,14 @@
     </div>
   </main>
 
-  <footer class="gx-foot">GALLEYLEO &middot; everything runs in your browser &middot; nothing leaves this page</footer>
+  <footer class="gx-foot">
+    <div>GALLEYLEO <span id="verStamp"></span></div>
+    <div>Everything runs in your browser &middot; Nothing leaves this&nbsp;page</div>
+    <div class="gx-foot-note">A diagnostic aid, not the final word &mdash; it can miss real problems and flag things that are fine, so trust your own&nbsp;eye.</div>
+  </footer>
 </div>
+
+<div id="busy" class="gx-busy hidden" aria-live="polite"><div class="gx-busy-card"><div class="gx-spin"></div><div class="gx-busy-msg" id="busyMsg">Analyzing&hellip;</div></div></div>
 
 <script>
 "use strict";
@@ -467,13 +626,15 @@ function splitSentences(para){
 
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-/* Build the full model + manuscript HTML in one pass */
-function analyze(text){
+/* Build the full model + per-paragraph manuscript HTML in one pass */
+function analyze(text, wrapWords){
+  wrapWords = wrapWords!==false;   // large documents pass false to skip per-word spans
   const paras = splitParagraphs(text);
   const sentences=[];      // {gsi, pi, lengthWords, firstWord, wordIdxs:[gwi]}
   const allWords=[];       // {gwi, gsi, pi, norm, orig}
   const freq=new Map();
-  let html="", gsi=0, gwi=0;
+  const htmlParas=[];      // one HTML string per paragraph, so the manuscript can render in batches
+  let gsi=0, gwi=0;
 
   paras.forEach((p, pi)=>{
     const sents = splitSentences(p);
@@ -489,7 +650,9 @@ function analyze(text){
         sHtml += esc(sent.slice(last, m.index));
         const orig=m[0], nrm=normWord(orig);
         const id=gwi++;
-        sHtml += `<span class="gx-w" id="w${id}" data-w="${esc(nrm)}" data-s="${sIdx}">${esc(orig)}</span>`;
+        sHtml += wrapWords
+          ? `<span class="gx-w" id="w${id}" data-w="${esc(nrm)}" data-s="${sIdx}">${esc(orig)}</span>`
+          : esc(orig);
         freq.set(nrm,(freq.get(nrm)||0)+1);
         allWords.push({gwi:id, gsi:sIdx, pi, norm:nrm, orig, pOff:pCursor+m.index});
         rec.wordIdxs.push(id);
@@ -499,16 +662,24 @@ function analyze(text){
       }
       sHtml += esc(sent.slice(last));
       pHtml += `<span class="gx-s" id="s${sIdx}" data-s="${sIdx}">${sHtml}</span>`;
+      const tail=sent.replace(/[\s"'\u201C\u201D\u2018\u2019)\]]+$/,""); const lc=tail.slice(-1);
+      rec.mood = lc==="?"?"q" : lc==="!"?"e" : "s";   // question / exclamation / statement
       sentences.push(rec);
       pCursor += sent.length;
     });
-    html += `<div class="gx-p" id="p${pi+1}"><span class="gx-pn">\u00B6${pi+1}</span>${pHtml}</div>`;
+    htmlParas.push(`<div class="gx-p" id="p${pi+1}"><span class="gx-pn">\u00B6${pi+1}</span>${pHtml}</div>`);
   });
 
-  return {paras, sentences, allWords, freq, html, totalWords:gwi};
+  return {paras, sentences, allWords, freq, htmlParas, totalWords:gwi};
 }
 
 /* ---------------- proofing detectors (per paragraph, mapped to words) ---------------- */
+/* high-confidence reference data for the new proofing checks */
+const A_SOUND_CONS = new Set("one once oneself ouija unicorn unicorns unicycle uniform uniformed uniforms uniformity unify unified union unions unique uniquely uniqueness unisex unison unit unite united unites uniting units unity universal universe universes universities university usable usage use used useful useless user users uses using usual usually usurp usurper utensil utensils uterus utilitarian utility utilize utilized utopia utopian euphemism euphemisms euphemistic euphoria euphoric eulogy eulogize european europeans eureka ewe ewes ukulele ufo ufos".split(" "));
+const AN_SOUND_VOWEL = new Set("hour hours hourly hourglass honest honestly honesty honor honors honored honorable honorably honour honours honoured honourable heir heirs heiress heirloom".split(" "));
+const MISSPELL = {alot:"a lot",accross:"across",becuase:"because",begining:"beginning",beleive:"believe",beleived:"believed",calender:"calendar",cemetary:"cemetery",concious:"conscious",definately:"definitely",definatly:"definitely",embarass:"embarrass",enviroment:"environment",existance:"existence",freind:"friend",goverment:"government",grammer:"grammar",independant:"independent",occured:"occurred",occurance:"occurrence",persistant:"persistent",priviledge:"privilege",recieve:"receive",recieved:"received",rythm:"rhythm",seperate:"separate",seperated:"separated",succesful:"successful",suprise:"surprise",tommorow:"tomorrow",tommorrow:"tomorrow",tounge:"tongue",untill:"until",wierd:"weird",thier:"their",arguement:"argument",noticable:"noticeable",occassion:"occasion",refered:"referred",relevent:"relevant",religous:"religious",repitition:"repetition",supercede:"supersede",yeild:"yield"};
+const matchCase = (orig,sug) => /^[A-Z]/.test(orig) ? sug.charAt(0).toUpperCase()+sug.slice(1) : sug;
+
 function proof(model, rawParas){
   const marks=[];
   const wordsByPara={};
@@ -585,6 +756,60 @@ function proof(model, rawParas){
           msg:`This paragraph doesn&rsquo;t end on a closing mark &mdash; a sentence may be missing its period.`});
       }
     }
+    // could/should/would/must/might + of  ->  have
+    {
+      const co=/\b(could|should|would|must|might)(\s+)of\b/gi; let cm;
+      while((cm=co.exec(p))!==null){
+        const wr=(wordsByPara[pi]||[]).find(x=>x.pOff===cm.index);
+        marks.push({kind:"word choice",soft:true,pi,gwi:wr?wr.gwi:null,gsi:wr?wr.gsi:null,
+          msg:`<em>${esc(cm[1])} of</em> is almost always <em>${esc(cm[1])} have</em> &mdash; the contraction <em>${esc(cm[1])}\u2019ve</em> just sounds like &ldquo;of.&rdquo; (Fine as dialect inside dialogue.)`});
+      }
+    }
+    // repeated punctuation
+    if(/[,;:]{2,}/.test(p)) marks.push({kind:"punctuation",soft:false,pi,gwi:null,msg:"A punctuation mark repeats &mdash; two commas, colons, or semicolons in a row."});
+    {
+      const st=p.match(/[!?]{2,}/);
+      if(st) marks.push({kind:"punctuation",soft:true,pi,gwi:null,msg:`Stacked end marks &mdash; <em>${esc(st[0])}</em>. At home in dialogue, heavy in narration.`});
+    }
+  });
+
+  // per-word: lowercase pronoun "I", common misspellings, a/an agreement
+  Object.keys(wordsByPara).forEach(k=>{
+    const pi=+k, ws=wordsByPara[pi], ptext=rawParas[pi]||"";
+    ws.forEach((w,idx)=>{
+      // lowercase pronoun "I" and its contractions (i'm, i've, i'll, i'd)
+      if(w.orig.charAt(0)==="i" && (w.norm==="i" || /^i['\u2019]/.test(w.norm))){
+        const tail=ptext.slice(w.pOff+w.orig.length, w.pOff+w.orig.length+2);
+        let skip = (tail===".e"); // i.e.
+        if(!skip && /^[.)]/.test(tail) && /^\s*$/.test(ptext.slice(0,w.pOff))) skip=true; // "i." / "i)" opening a line
+        if(!skip){
+          marks.push({kind:"capitalisation",soft:false,pi,gwi:w.gwi,gsi:w.gsi,
+            msg:`The pronoun <em>${esc(w.orig)}</em> is lowercase &mdash; it should be <em>${esc(w.orig.replace(/^i/,"I"))}</em>.`});
+        }
+      }
+      // common misspelling
+      if(Object.prototype.hasOwnProperty.call(MISSPELL,w.norm)){
+        marks.push({kind:"spelling",soft:false,pi,gwi:w.gwi,gsi:w.gsi,
+          msg:`<em>${esc(w.orig)}</em> looks like a misspelling of <em>${esc(matchCase(w.orig,MISSPELL[w.norm]))}</em>.`});
+      }
+      // a / an agreement (skip capitalised followers — proper nouns and acronyms vary)
+      if((w.norm==="a"||w.norm==="an") && idx+1<ws.length){
+        const nxt=ws[idx+1];
+        if(/^\s+$/.test(ptext.slice(w.pOff+w.orig.length, nxt.pOff))){
+          const nf=nxt.orig.charAt(0);
+          if(!/[A-Z]/.test(nf)){
+            const vowel=/[aeiou]/i.test(nf);
+            if(w.norm==="a" && vowel && !A_SOUND_CONS.has(nxt.norm)){
+              marks.push({kind:"article",soft:true,pi,gwi:w.gwi,gsi:w.gsi,
+                msg:`<em>a ${esc(nxt.orig)}</em> &mdash; a word that opens on a vowel sound usually takes <em>an</em>.`});
+            } else if(w.norm==="an" && !vowel && !AN_SOUND_VOWEL.has(nxt.norm)){
+              marks.push({kind:"article",soft:true,pi,gwi:w.gwi,gsi:w.gsi,
+                msg:`<em>an ${esc(nxt.orig)}</em> &mdash; a word that opens on a consonant sound usually takes <em>a</em>.`});
+            }
+          }
+        }
+      }
+    });
   });
 
   // per-sentence: lowercase start (possible) + very long (review) + no terminal punctuation
@@ -666,37 +891,224 @@ function findMatches(model,query){ const q=(query||"").trim(); if(!q) return [];
       if(m.index===re.lastIndex) re.lastIndex++; } });
   return matches; }
 
+/* ---- analysis for the added tools (all pure: arrays/strings only) ---- */
+function paraWordCounts(model){ const a=new Array(model.paras.length).fill(0); model.sentences.forEach(s=>{ a[s.pi]+=s.lengthWords; }); return a; }
+
+const SPEECH_VERBS=new Set("said asked replied answered whispered murmured muttered shouted yelled exclaimed demanded insisted stated declared announced remarked retorted snapped hissed growled stammered mumbled protested interjected drawled cried called continued added repeated breathed gasped sighed laughed chuckled barked roared screamed wailed sobbed grumbled offered countered observed noted pleaded begged warned admitted confessed conceded responded queried questioned mused ventured suggested urged commanded ordered".split(" "));
+const NEUTRAL_TAGS=new Set(["said","asked"]);
+function dialogueTagStats(model){
+  const ranges={};
+  const near=(pi,off)=>{ const rs=ranges[pi]||(ranges[pi]=quoteRanges(model.paras[pi])); return rs.some(r=> (off>=r[0]&&off<=r[1]) || Math.abs(off-r[0])<=60 || Math.abs(off-r[1])<=60); };
+  const byVerb=new Map(); const adverbTags=[]; const aw=model.allWords;
+  for(let i=0;i<aw.length;i++){ const w=aw[i];
+    if(!SPEECH_VERBS.has(w.norm)) continue;
+    if(!near(w.pi,w.pOff)) continue;                       // only count verbs sitting beside a quote (a tag)
+    (byVerb.get(w.norm)||byVerb.set(w.norm,[]).get(w.norm)).push(w.gwi);
+    const nx=aw[i+1], pv=aw[i-1];
+    if(nx && nx.gsi===w.gsi && isAdverb(nx.norm)) adverbTags.push({verbGwi:w.gwi, advGwi:nx.gwi, verb:w.orig, adv:nx.orig});
+    else if(pv && pv.gsi===w.gsi && isAdverb(pv.norm)) adverbTags.push({verbGwi:w.gwi, advGwi:pv.gwi, verb:w.orig, adv:pv.orig});
+  }
+  const verbs=[...byVerb.entries()].map(([v,g])=>({verb:v,count:g.length,firsts:g,neutral:NEUTRAL_TAGS.has(v)}))
+    .sort((a,b)=>b.count-a.count||a.verb.localeCompare(b.verb));
+  const total=verbs.reduce((s,v)=>s+v.count,0);
+  const neutral=verbs.filter(v=>v.neutral).reduce((s,v)=>s+v.count,0);
+  return {verbs,total,neutral,adverbTags};
+}
+
+function properNouns(model){
+  const firsts=new Set(); model.sentences.forEach(s=>{ if(s.wordIdxs.length) firsts.add(s.wordIdxs[0]); });
+  const cap=w=>/^[A-Z\u00C0-\u00DE]/.test(w.orig);
+  // judge name-ness on MID-SENTENCE occurrences: a name is capitalised wherever it sits,
+  // while "the"/"however"/"a" are lowercase when not starting a sentence. Sentence-start
+  // capitals are excluded from the judgement (they'd just reflect how often a word opens a
+  // sentence), but every capitalised occurrence is still counted for the displayed total.
+  const midCap={}, midLow={}, capGwis={}, display={};
+  model.allWords.forEach(w=>{
+    if(w.norm==="i") return;
+    const isCap=cap(w);
+    if(isCap){ (capGwis[w.norm]||(capGwis[w.norm]=[])).push(w.gwi); if(!display[w.norm]) display[w.norm]=w.orig; }
+    if(!firsts.has(w.gwi)){ if(isCap) midCap[w.norm]=(midCap[w.norm]||0)+1; else midLow[w.norm]=(midLow[w.norm]||0)+1; }
+  });
+  const out=[];
+  Object.keys(capGwis).forEach(norm=>{
+    const mc=midCap[norm]||0, ml=midLow[norm]||0;
+    if(mc>=1 && mc/(mc+ml)>=0.5 && capGwis[norm].length>=2)   // mostly-capitalised mid-sentence -> a name, not "the"/"however"
+      out.push({norm, display:display[norm], gwis:capGwis[norm]});
+  });
+  return out.sort((a,b)=>b.gwis.length-a.gwis.length||a.display.localeCompare(b.display));
+}
+
+function dialogueDensity(model, bins=80){
+  const aw=model.allWords; if(!aw.length) return [];
+  const ranges={}; const inQ=new Uint8Array(aw.length);
+  for(let i=0;i<aw.length;i++){ const w=aw[i]; const rs=ranges[w.pi]||(ranges[w.pi]=quoteRanges(model.paras[w.pi]));
+    if(rs.some(r=>w.pOff>=r[0]&&w.pOff<r[1])) inQ[i]=1; }
+  const per=Math.max(1,Math.ceil(aw.length/bins)); const out=[];
+  for(let b=0; b*per<aw.length; b++){ const s=b*per, e=Math.min(aw.length,s+per); let d=0;
+    for(let i=s;i<e;i++) d+=inQ[i];
+    out.push({pct:(e>s)?d/(e-s):0, gsi:aw[s].gsi}); }
+  return out;
+}
+
+function detectPhrases(model, lens=[5,4,3], minCount=2){
+  const aw=model.allWords; const kept=[];
+  for(const n of lens){
+    if(aw.length<n) continue;
+    const map=new Map();
+    for(let i=0;i+n<=aw.length;i++){
+      if(aw[i].gsi!==aw[i+n-1].gsi) continue;               // keep phrases within one sentence
+      let key="", allStop=true;
+      for(let k=0;k<n;k++){ const w=aw[i+k]; key+=(k?" ":"")+w.norm; if(!STOP.has(w.norm)) allStop=false; }
+      if(allStop) continue;
+      let a=map.get(key); if(!a){ a=[]; map.set(key,a); } a.push(aw[i].gwi);
+    }
+    for(const [key,gwis] of map){ if(gwis.length>=minCount){
+      const padded=" "+key+" ";
+      if(kept.some(p=>p.count>=gwis.length && (" "+p.phrase+" ").includes(padded))) continue;   // subsumed by a longer, >=frequent phrase
+      kept.push({phrase:key, count:gwis.length, firsts:gwis});
+    }}
+  }
+  return kept.sort((a,b)=> b.count-a.count || b.phrase.split(" ").length-a.phrase.split(" ").length || a.phrase.localeCompare(b.phrase));
+}
+
 /* ============================ STATE + RENDER ============================ */
 let MODEL=null, MARKS=null, OPENER_MAP=null, FREQ_SORTED=null, hideFn=true;
-let WATCHLIST=[], GEN_STEP={};
+let LARGE_DOC=false, WORD_INDEX=null, STRIP_OFF=false;
+let MS_PARAS=null, MS_NEXT=0, MS_OBS=null;                     // progressive manuscript: paragraph HTML, next index, scroll observer
+const LARGE_DOC_WORDS=70000;                                   // above this: manuscript skips per-word spans (locate falls back to sentence level)
+const LARGE_DOC_WORDS_MOBILE=15000;                            // phones drop per-word spans much sooner — their memory budget is tiny
+const MS_BATCH_PARAS=60;                                       // paragraphs rendered per batch when loading the manuscript progressively
+const SEQ_CAP=500, ECHO_CAP=400, DIALOGUE_CAP=500, MARKS_CAP=500;  // bound per-item nodes in the result panels
+function maxOf(arr,floor){ let m=floor; for(let i=0;i<arr.length;i++) if(arr[i]>m) m=arr[i]; return m; }
+function minOf(arr,fallback){ if(!arr.length) return fallback; let m=arr[0]; for(let i=1;i<arr.length;i++) if(arr[i]<m) m=arr[i]; return m; }
+function buildWordIndex(){   // norm -> [gwi,...]; built once per analysis, reused by confusables and large-doc locate
+  WORD_INDEX=new Map();
+  const aw=MODEL.allWords;
+  for(let i=0;i<aw.length;i++){ const n=aw[i].norm; let a=WORD_INDEX.get(n); if(!a){ a=[]; WORD_INDEX.set(n,a); } a.push(aw[i].gwi); }
+}
+function hlTarget(gwi, cls){   // highlight the word span if present; otherwise (large-doc mode) the sentence it sits in
+  const rec=MODEL && MODEL.allWords[gwi];
+  if(rec) ensureParaRendered(rec.pi);
+  const w=$("w"+gwi);
+  if(w){ w.classList.add(cls); return w; }
+  if(rec){ const s=$("s"+rec.gsi); if(s){ s.classList.add("hl-s"); return s; } }
+  return null;
+}
+const GALLEY_VERSION="1.12.0";
+let WATCHLIST=[], GEN_STEP={}, DLG_LINES=[], ECHOES=[], DTAGS=null;
+const PAGED={};                                               // per-panel paging state for "load more" lists
 let SEL=new Set(), SEL_ANCHOR=null, dragStartGsi=null, dragMoved=false, dragLastGsi=null;
+let touchSel=null, lastTouchTime=-1e9, autoScrollDir=0, autoScrollRAF=null, autoScrollX=0, holdTimer=null;
+let MS_HOME=null, lastCardEl=null;
+const isMobileView = () => window.matchMedia("(max-width: 960px)").matches;
+function placeManuscriptMobile(){
+  const msCard=$("msCard");
+  if(!msCard || !lastCardEl || !lastCardEl.parentNode) return;
+  if(lastCardEl.nextSibling!==msCard) lastCardEl.parentNode.insertBefore(msCard, lastCardEl.nextSibling);
+}
+function restoreManuscript(){
+  const msCard=$("msCard");
+  if(msCard && MS_HOME && msCard.parentNode!==MS_HOME) MS_HOME.appendChild(msCard);
+}
 
 const $=id=>document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+const PROGRESS_WORDS=12000;   // show the working overlay above this; smaller docs analyze instantly
+function nextFrame(){ return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
+function showBusy(msg){ $("busyMsg").textContent=msg; $("busy").classList.remove("hidden"); }
+function setBusy(msg){ $("busyMsg").textContent=msg; }
+function hideBusy(){ $("busy").classList.add("hidden"); }
 
 function median(arr){ if(!arr.length) return 0; const a=[...arr].sort((x,y)=>x-y); const m=a.length>>1;
   return a.length%2?a[m]:Math.round((a[m-1]+a[m])/2); }
 
-function run(){
+async function run(){
   const text=$("ta").value;
   if(!text.trim()){ $("ta").focus(); return; }
-  MODEL=analyze(text);
+  const approxWords=(text.match(/\S+/g)||[]).length;
+  const mobile=isMobileView();
+  LARGE_DOC = approxWords > (mobile ? LARGE_DOC_WORDS_MOBILE : LARGE_DOC_WORDS);
+  STRIP_OFF = mobile && LARGE_DOC;                          // the bar strip is the heaviest DOM + unusable on a phone at this size
+  const heavy = approxWords > PROGRESS_WORDS;   // phone CPUs lock on one long synchronous block — break it up
+  if(heavy){ showBusy("Reading\u2026"); await nextFrame(); }
+
+  MODEL=analyze(text, !LARGE_DOC);
+  if(heavy){ setBusy("Proofing\u2026"); await nextFrame(); }
+
+  buildWordIndex();
   MARKS=proof(MODEL, MODEL.paras);
+  if(heavy){ setBusy("Building report\u2026"); await nextFrame(); }
+
   buildMetrics();
-  buildRhythm();
   buildFreq();
   buildOpeners();
   buildWatchWords();
   buildEchoes();
+  buildDialogue();
   buildMarks();
   buildConfusables();
-  $("msBody").innerHTML=MODEL.html;
+  buildMood();
+  buildNames();
+  buildDialogueTags();
+  resetPhrases();
+
   GEN_STEP={};
   SEL.clear(); SEL_ANCHOR=null; dragStartGsi=null; updateSelInfo();
+  restoreManuscript(); lastCardEl=null;
   $("findInput").value=""; $("findCount").textContent="";
   $("inputView").classList.add("hidden");
-  $("resultsView").classList.remove("hidden");
+  $("resultsView").classList.remove("hidden");   // reveal now so the two heavy renders below lay out in separate frames, not one
+  if(heavy){ setBusy("Drawing rhythm\u2026"); await nextFrame(); }
+
+  buildRhythm();
+  buildParagraphRhythm();
+  buildDensity();
+  if(heavy){ setBusy("Rendering manuscript\u2026"); await nextFrame(); }
+
+  renderManuscript();                                       // progressive on mobile-large, one-shot otherwise
+  updateLargeNote();
+  if(heavy){ await nextFrame(); hideBusy(); }
   window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
+}
+/* ---- manuscript rendering: one-shot, or progressive batches for large docs on small screens ---- */
+function renderManuscript(){
+  if(MS_OBS){ MS_OBS.disconnect(); MS_OBS=null; }
+  const body=$("msBody"); body.innerHTML="";
+  MS_NEXT=0;
+  if(!STRIP_OFF){                       // desktop / small docs: render the whole manuscript at once
+    body.innerHTML=MODEL.htmlParas.join("");
+    MS_PARAS=null;                      // not needed once fully in the DOM
+    return;
+  }
+  MS_PARAS=MODEL.htmlParas;             // keep the per-paragraph HTML to feed in batches as the reader scrolls
+  msRenderUpTo(MS_BATCH_PARAS);
+  if(MS_NEXT < MS_PARAS.length){
+    const s=document.createElement("div");
+    s.id="msSentinel"; s.className="gx-ms-sentinel"; s.textContent="Loading more of the manuscript\u2026";
+    body.appendChild(s);
+    MS_OBS=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)) onMsSentinel(); }, {root:null, rootMargin:"700px 0px"});
+    MS_OBS.observe(s);
+  }
+}
+function msRenderUpTo(target){           // ensure paragraphs [0, target) are in the DOM, inserted before the sentinel
+  if(!MS_PARAS) return;
+  const to=Math.min(target, MS_PARAS.length);
+  if(to<=MS_NEXT) return;
+  const frag=MS_PARAS.slice(MS_NEXT, to).join("");
+  const s=$("msSentinel");
+  if(s) s.insertAdjacentHTML("beforebegin", frag); else $("msBody").insertAdjacentHTML("beforeend", frag);
+  MS_NEXT=to;
+  if(MS_NEXT>=MS_PARAS.length){ if(MS_OBS){ MS_OBS.disconnect(); MS_OBS=null; } const e=$("msSentinel"); if(e) e.remove(); }
+}
+function onMsSentinel(){ msRenderUpTo(MS_NEXT + MS_BATCH_PARAS); }
+function ensureParaRendered(pi){ if(MS_PARAS && pi>=MS_NEXT) msRenderUpTo(pi+1); }   // before locating into not-yet-loaded text
+function updateLargeNote(){
+  const n=$("largeNote");
+  if(!LARGE_DOC){ n.classList.add("hidden"); return; }
+  n.classList.remove("hidden");
+  n.innerHTML = STRIP_OFF
+    ? `Large document on a small screen &mdash; the manuscript loads as you scroll and the rhythm bar strip is hidden, to fit the phone&rsquo;s memory (both are full on desktop). Locating a word jumps to and highlights its <b>sentence</b>. Every statistic is exact.`
+    : `Large-document mode &mdash; the manuscript is rendered for speed, so locating a word highlights its <b>sentence</b> rather than the single word. Every statistic is still exact.`;
 }
 
 function buildMetrics(){
@@ -720,11 +1132,11 @@ function buildMetrics(){
 function buildRhythm(){
   const lens=MODEL.sentences.map(s=>s.lengthWords);
   const nz=lens.filter(n=>n>0);
-  const max=Math.max(1,...lens);
+  const max=maxOf(lens,1);
   const frags=nz.filter(n=>n<=4).length;
   const longs=nz.filter(n=>n>=30).length;
   $("rhythmStats").innerHTML=[
-    ["shortest",Math.min(...(nz.length?nz:[0]))],
+    ["shortest",nz.length?minOf(nz,0):0],
     ["median",median(nz)],
     ["mean",nz.length?(nz.reduce((a,b)=>a+b,0)/nz.length).toFixed(1):0],
     ["longest",max],
@@ -741,17 +1153,15 @@ function buildRhythm(){
     mono.querySelectorAll(".gx-flat").forEach(b=>b.addEventListener("click",()=>{ selectRange(+b.dataset.s,+b.dataset.e,true,{strip:true,manuscript:true}); }));
   } else { mono.innerHTML=`<span class="gx-flat-clear">No long flat stretches &mdash; the rhythm keeps moving.</span>`; }
 
-  const strip=$("strip"); strip.innerHTML="";
-  MODEL.sentences.forEach(s=>{
+  const strip=$("strip");
+  if(STRIP_OFF){
+    strip.innerHTML=`<div class="gx-strip-note">Bar strip hidden on mobile for very large documents &mdash; the figures above summarise the rhythm. The full strip is available on desktop.</div>`;
+    return;
+  }
+  strip.innerHTML=MODEL.sentences.map(s=>{
     const h=4+Math.round((s.lengthWords/max)*94);
-    const b=document.createElement("div");
-    b.className="gx-bar"+(s.lengthWords<=4?" frag":"");
-    b.style.height=h+"px";
-    b.title=`Sentence ${s.gsi+1} \u00B7 ${s.lengthWords} word${s.lengthWords===1?"":"s"}`;
-    b.dataset.s=s.gsi;
-    b.addEventListener("mousedown",e=>onBarDown(s.gsi,e));
-    strip.appendChild(b);
-  });
+    return `<div class="gx-bar${s.lengthWords<=4?' frag':''}" style="height:${h}px" data-s="${s.gsi}" title="Sentence ${s.gsi+1} \u00B7 ${s.lengthWords} word${s.lengthWords===1?'':'s'}"></div>`;
+  }).join("");
 }
 function barEl(gsi){ const s=$("strip"); const b=s&&s.children[gsi]; return (b&&b.classList&&b.classList.contains("gx-bar"))?b:null; }
 function scrollStripToBars(bars){
@@ -784,6 +1194,7 @@ function applySelection(opts){
 }
 function selectRange(a,b,anchorAtA,scroll){
   const lo=Math.min(a,b),hi=Math.max(a,b);
+  if(MODEL && MODEL.sentences[hi]) ensureParaRendered(MODEL.sentences[hi].pi);
   SEL=new Set(); for(let i=lo;i<=hi;i++) SEL.add(i);
   SEL_ANCHOR=anchorAtA?a:b;
   applySelection(scroll||{strip:true,manuscript:true});
@@ -810,6 +1221,7 @@ function barIndexFromX(clientX){
   if(i<0)i=0; if(i>=n)i=n-1; return i;
 }
 function onBarDown(gsi,e){
+  if(performance.now()-lastTouchTime<700) return; // ignore mouse events synthesized from a touch
   e.preventDefault();
   if(e.shiftKey && SEL_ANCHOR!=null){ selectRange(SEL_ANCHOR,gsi,true,{manuscript:true}); dragStartGsi=null; return; }
   if(e.metaKey||e.ctrlKey){ if(SEL.has(gsi)) SEL.delete(gsi); else SEL.add(gsi); SEL_ANCHOR=gsi; applySelection({manuscript:true}); dragStartGsi=null; return; }
@@ -829,6 +1241,71 @@ function onStripUp(){
   dragStartGsi=null;
   applySelection({manuscript:true});
 }
+/* ---- touch: press-and-hold a bar, then slide to drag-select (a plain swipe just scrolls) ---- */
+const HOLD_MS=350, MOVE_CANCEL=10;
+function cancelHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
+function armSelect(){
+  holdTimer=null;
+  if(!touchSel || touchSel.mode!==null) return;
+  touchSel.mode="select";
+  dragStartGsi=touchSel.gsi; dragMoved=false; dragLastGsi=touchSel.gsi;
+  SEL=new Set([dragStartGsi]); SEL_ANCHOR=dragStartGsi; applySelection({barsOnly:true});
+  if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(_){} }   // subtle "armed" cue
+}
+function onBarTouchStart(gsi,e){
+  cancelHold();
+  if(e.touches.length!==1){ touchSel=null; return; }
+  lastTouchTime=performance.now();
+  const t=e.touches[0];
+  touchSel={x0:t.clientX, y0:t.clientY, gsi, mode:null};
+  holdTimer=setTimeout(armSelect,HOLD_MS);   // hold still to arm; move first = scroll
+}
+function touchExtend(clientX){
+  const gsi=barIndexFromX(clientX);
+  if(gsi==null||gsi===dragLastGsi) return;
+  dragLastGsi=gsi; dragMoved=true;
+  const lo=Math.min(dragStartGsi,gsi),hi=Math.max(dragStartGsi,gsi);
+  SEL=new Set(); for(let i=lo;i<=hi;i++) SEL.add(i); SEL_ANCHOR=dragStartGsi;
+  applySelection({barsOnly:true});
+}
+function onStripTouchMove(e){
+  if(!touchSel || e.touches.length!==1) return;
+  lastTouchTime=performance.now();
+  const t=e.touches[0];
+  if(touchSel.mode===null){
+    // moved before the hold armed -> treat as a scroll; let the browser handle it
+    if(Math.abs(t.clientX-touchSel.x0)>MOVE_CANCEL || Math.abs(t.clientY-touchSel.y0)>MOVE_CANCEL){ cancelHold(); touchSel.mode="scroll"; }
+    return;
+  }
+  if(touchSel.mode!=="select") return;          // scroll mode -> native scrolling, do nothing
+  e.preventDefault();                            // armed: the selection drag owns the gesture
+  autoScrollX=t.clientX;
+  edgeAutoScroll(t.clientX);
+  touchExtend(t.clientX);
+}
+function onStripTouchEnd(){
+  cancelHold();
+  if(!touchSel) return;
+  lastTouchTime=performance.now();
+  const mode=touchSel.mode, gsi=touchSel.gsi;
+  touchSel=null; stopAutoScroll();
+  if(mode==="select"){ onStripUp(); }
+  else if(mode===null){ dragStartGsi=null; SEL=new Set([gsi]); SEL_ANCHOR=gsi; applySelection({manuscript:true}); }  // tap -> select one
+}
+function edgeAutoScroll(clientX){
+  const sc=$("strip").parentElement, r=sc.getBoundingClientRect(), edge=30;
+  autoScrollDir = clientX < r.left+edge ? -1 : clientX > r.right-edge ? 1 : 0;
+  if(autoScrollDir!==0 && autoScrollRAF==null) autoScrollRAF=requestAnimationFrame(autoScrollStep);
+}
+function autoScrollStep(){
+  autoScrollRAF=null;
+  if(!touchSel || touchSel.mode!=="select" || autoScrollDir===0) return;
+  const sc=$("strip").parentElement, max=Math.max(0,sc.scrollWidth-sc.clientWidth);
+  const next=Math.min(max,Math.max(0,sc.scrollLeft+autoScrollDir*14));
+  if(next!==sc.scrollLeft){ sc.scrollLeft=next; touchExtend(autoScrollX); }
+  autoScrollRAF=requestAnimationFrame(autoScrollStep);
+}
+function stopAutoScroll(){ autoScrollDir=0; if(autoScrollRAF!=null){ cancelAnimationFrame(autoScrollRAF); autoScrollRAF=null; } }
 
 function sortedFreq(){
   if(FREQ_SORTED) return FREQ_SORTED;
@@ -878,14 +1355,11 @@ function buildOpeners(){
   host.querySelectorAll(".gx-row").forEach(r=>r.addEventListener("click",()=>stepOpener(r)));
 
   // ordered sequence of first words
-  const seq=$("openerSeq");
-  seq.innerHTML=`<span class="gx-seq-lbl">First word of each sentence, in order</span>`+
-    MODEL.sentences.map(s=>{
-      const w=s.firstWord||"\u2014";
-      const rep=repeated.has(s.firstWord)?" rep":"";
-      return `<span class="gx-chip${rep}" data-go="${s.gsi}" title="Sentence ${s.gsi+1}">${esc(w)}</span>`;
-    }).join("");
-  seq.querySelectorAll(".gx-chip").forEach(c=>c.addEventListener("click",()=>{ gotoSentence(+c.dataset.go); }));
+  pagedRender("openerSeq", MODEL.sentences, SEQ_CAP, s=>{
+    const w=s.firstWord||"\u2014";
+    const rep=repeated.has(s.firstWord)?" rep":"";
+    return `<span class="gx-chip${rep}" data-go="${s.gsi}" title="Sentence ${s.gsi+1}">${esc(w)}</span>`;
+  }, `<span class="gx-seq-lbl">First word of each sentence, in order</span>`);
 }
 
 function rowMarkup(w,c,max,extra){
@@ -928,19 +1402,67 @@ function renderWatchlist(){
     });
   });
 }
+/* generic "load more" list: renders a page of items, with a button to append the next page.
+   item clicks are handled by one delegated listener per host (wired once at init), so appended rows stay live. */
+function pagedRender(hostId, items, cap, renderItem, prefix){
+  PAGED[hostId]={items, cap, shown:0, renderItem};
+  $(hostId).innerHTML = prefix||"";
+  pagedMore(hostId);
+}
+function pagedMore(hostId){
+  const st=PAGED[hostId]; if(!st) return;
+  const host=$(hostId);
+  const old=host.querySelector(".gx-loadmore"); if(old) old.remove();
+  const to=Math.min(st.shown+st.cap, st.items.length);
+  host.insertAdjacentHTML("beforeend", st.items.slice(st.shown,to).map((it,k)=>st.renderItem(it, st.shown+k)).join(""));
+  st.shown=to;
+  const left=st.items.length-st.shown;
+  if(left>0) host.insertAdjacentHTML("beforeend",
+    `<button class="gx-loadmore" data-host="${hostId}">Show ${Math.min(st.cap,left).toLocaleString()} more <span class="lm-left">\u00B7 ${left.toLocaleString()} of ${st.items.length.toLocaleString()} left</span></button>`);
+}
 function buildEchoes(){
-  const echoes=detectEchoes(MODEL);
+  const echoes=detectEchoes(MODEL); ECHOES=echoes;
   const host=$("echoRows");
   if(!echoes.length){ host.innerHTML=`<div class="gx-allclear">No close repeats &mdash; no words echoing within a few sentences.</div>`; return; }
-  host.innerHTML=echoes.map((e,i)=>
+  pagedRender("echoRows", echoes, ECHO_CAP, (e,i)=>
     `<button class="gx-echo" data-i="${i}"><span class="ew">${esc(e.word)}</span>
-       <span class="ed">repeats after ${e.dist} word${e.dist===1?"":"s"}</span></button>`).join("");
-  host.querySelectorAll(".gx-echo").forEach(b=>b.addEventListener("click",()=>{
-    const e=echoes[+b.dataset.i]; clearHL();
-    const ea=$("w"+e.a), eb=$("w"+e.b);
-    if(ea) ea.classList.add("hl-w"); if(eb) eb.classList.add("hl-w");
-    scrollIn(eb||ea);
-  }));
+       <span class="ed">repeats after ${e.dist} word${e.dist===1?"":"s"}</span></button>`);
+}
+function extractDialogue(model){
+  const wbp=wordsByParaIdx(model); const lines=[];
+  model.paras.forEach((p,pi)=>{
+    quoteRanges(p).forEach(([s,e])=>{
+      const text=p.slice(s,e+1).trim();
+      const gwis=(wbp[pi]||[]).filter(w=>w.pOff>s && w.pOff<e).map(w=>w.gwi);
+      if(gwis.length && /[\p{L}\p{N}]/u.test(text)) lines.push({text,gwis});
+    });
+  });
+  return lines;
+}
+function buildDialogue(){
+  const lines=extractDialogue(MODEL);
+  DLG_LINES=lines;
+  const host=$("dlgRows"), stat=$("dlgStat"), copyBtn=$("dlgCopy");
+  if(!lines.length){
+    host.innerHTML=`<div class="gx-dlg-empty">No quoted dialogue found &mdash; this passage is all narration (or uses single quotes).</div>`;
+    stat.textContent=""; copyBtn.style.display="none"; return;
+  }
+  copyBtn.style.display="";
+  stat.textContent=lines.length+" line"+(lines.length===1?"":"s")+" \u00B7 "+Math.round(dialogueRatio(MODEL)*100)+"% of the prose";
+  pagedRender("dlgRows", lines, DIALOGUE_CAP, (l,i)=>`<button class="gx-dline" data-i="${i}">${esc(l.text)}</button>`);
+}
+function gotoDialogue(gwis){
+  clearHL(); let first=null;
+  gwis.forEach(gi=>{ const el=hlTarget(gi,"hl-s"); if(el && !first) first=el; });
+  if(first) scrollIn(first);
+}
+function copyDialogue(){
+  if(!DLG_LINES.length) return;
+  const text=DLG_LINES.map(l=>l.text).join("\n");
+  const b=$("dlgCopy");
+  const done=()=>{ const o=b.dataset.label||b.textContent; b.dataset.label=o; b.textContent="Copied \u2713"; setTimeout(()=>{b.textContent=o;},1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done)); }
+  else fallbackCopy(text,done);
 }
 /* generic stepper over a list of matches (each match = array of word ids) */
 function stepMatches(key, countEl, matches){
@@ -950,7 +1472,7 @@ function stepMatches(key, countEl, matches){
   st.cur=(st.cur+1)%matches.length;
   clearHL();
   let first=null;
-  matches[st.cur].forEach(gi=>{ const e=$("w"+gi); if(e){ e.classList.add("hl-w"); if(!first)first=e; } });
+  matches[st.cur].forEach(gi=>{ const e=hlTarget(gi,"hl-w"); if(e && !first) first=e; });
   if(first) scrollIn(first);
   if(countEl) countEl.textContent=(st.cur+1)+"/"+matches.length;
 }
@@ -970,26 +1492,20 @@ function buildMarks(){
   if(!MARKS.length){
     host.innerHTML=`<div class="gx-allclear">No mechanical issues found. Clean galley.</div>`;
   } else {
-    host.innerHTML=MARKS.map((mk,i)=>
+    pagedRender("marks", MARKS, MARKS_CAP, (mk,i)=>
       `<button class="gx-mk${mk.soft?' soft':''}" data-i="${i}">
          <span class="ref">\u00B6${mk.pi+1}</span>
          <span class="msg">${mk.msg}<span class="kind">${mk.kind}${mk.soft?' \u00B7 review':''}</span></span>
-       </button>`).join("");
-    host.querySelectorAll(".gx-mk").forEach(b=>b.addEventListener("click",()=>{
-      const mk=MARKS[+b.dataset.i];
-      if(mk.gwi!=null) gotoWord(mk.gwi);
-      else if(mk.gsi!=null) gotoSentence(mk.gsi);
-      else gotoPara(mk.pi+1);
-    }));
+       </button>`);
   }
-  $("marksNote").innerHTML="GalleyLeo flags only what it can be sure of: doubled words, spacing, comma-vs-period in dialogue tags, missing end punctuation, unclosed quotes, runaway length. Nuanced grammar &mdash; agreement, tense drift, dangling modifiers &mdash; still wants a human read.";
+  $("marksNote").innerHTML="GalleyLeo flags only what it can be sure of: doubled words, spacing, repeated punctuation, a/an mix-ups, lowercase &ldquo;i,&rdquo; &ldquo;could of&rdquo;-type slips, a short list of common misspellings, comma-vs-period in dialogue tags, missing end punctuation, unclosed quotes, runaway length. Deeper grammar &mdash; subject&ndash;verb agreement, tense drift, dangling modifiers, comma splices &mdash; needs a parser or a model, which a private in-browser tool leaves to your own read.";
 }
 
 function buildConfusables(){
   const host=$("conf");
   const blocks=[];
   CONF_GROUPS.forEach(group=>{
-    const present=group.map(w=>({w,idxs:MODEL.allWords.filter(x=>x.norm===w).map(x=>x.gwi)})).filter(o=>o.idxs.length>0);
+    const present=group.map(w=>({w,idxs:(WORD_INDEX&&WORD_INDEX.get(w))||[]})).filter(o=>o.idxs.length>0);
     if(present.length>=2 || (present.length===1 && group.some(g=>g.includes("'")))){
       if(present.reduce((a,o)=>a+o.idxs.length,0)===0) return;
       blocks.push(`<div class="gx-confrow"><span class="pair">${esc(group.join(" / "))}</span>`+
@@ -1003,6 +1519,112 @@ function buildConfusables(){
   host.querySelectorAll(".gx-pill").forEach(p=>p.addEventListener("click",()=>stepWord(p)));
 }
 
+/* ---- the six added tools ---- */
+function stepIdxs(row){   // step through word ids in data-idxs; data-span>1 highlights that many consecutive words (a phrase)
+  const idxs=(row.dataset.idxs||"").split(",").map(Number).filter(n=>!isNaN(n));
+  if(!idxs.length) return;
+  const span=Math.max(1, parseInt(row.dataset.span,10)||1);
+  let cur=parseInt(row.dataset.cursor,10); cur=isNaN(cur)?0:(cur+1)%idxs.length; row.dataset.cursor=cur;
+  clearHL();
+  const start=idxs[cur]; let first=null;
+  for(let k=0;k<span;k++){ const el=hlTarget(start+k,"hl-w"); if(el && !first) first=el; }   // gwi===allWords index, so phrase words are consecutive
+  if(first) scrollIn(first);
+  const ct=row.querySelector(".ct"); if(ct) ct.textContent=(cur+1)+"/"+idxs.length;
+}
+
+function buildParagraphRhythm(){
+  const counts=paraWordCounts(MODEL);
+  const nz=counts.filter(n=>n>0); const max=maxOf(counts,1);
+  $("paraRhythmStats").innerHTML=[
+    ["paragraphs",MODEL.paras.length],
+    ["shortest",nz.length?minOf(nz,0):0],
+    ["median",median(nz)],
+    ["mean",nz.length?Math.round(nz.reduce((a,b)=>a+b,0)/nz.length):0],
+    ["longest",max]
+  ].map(([l,v])=>`<span class="gx-rs">${l} <b>${v.toLocaleString()}</b></span>`).join("");
+  const strip=$("paraStrip");
+  if(STRIP_OFF){ strip.innerHTML=`<div class="gx-strip-note">Bar strip hidden on mobile for very large documents &mdash; the figures above summarise it. Full strip on desktop.</div>`; return; }
+  strip.innerHTML=counts.map((c,pi)=>{
+    const h=4+Math.round((c/max)*94);
+    return `<div class="gx-bar" style="height:${h}px" data-p="${pi+1}" title="Paragraph ${pi+1} \u00B7 ${c} word${c===1?'':'s'}"></div>`;
+  }).join("");
+}
+
+function buildMood(){
+  let q=0,e=0,s=0; MODEL.sentences.forEach(x=>{ if(x.mood==="q")q++; else if(x.mood==="e")e++; else s++; });
+  const tot=q+e+s||1;
+  const seg=(n,cls)=> n? `<span class="mseg ${cls}" style="flex:${n}" title="${n.toLocaleString()}"></span>`:"";
+  $("moodBox").innerHTML=
+    `<div class="gx-moodbar">${seg(s,"st")}${seg(q,"qu")}${seg(e,"ex")}</div>`+
+    `<div class="gx-moodkey">`+
+      `<span><i class="st"></i>statements <b>${s.toLocaleString()}</b> &middot; ${Math.round(s/tot*100)}%</span>`+
+      `<span><i class="qu"></i>questions <b>${q.toLocaleString()}</b> &middot; ${Math.round(q/tot*100)}%</span>`+
+      `<span><i class="ex"></i>exclamations <b>${e.toLocaleString()}</b> &middot; ${Math.round(e/tot*100)}%</span>`+
+    `</div>`+
+    (e/tot>0.06 && e>3 ? `<div class="gx-mood-flag">Exclamation points run high &mdash; worth a pass to see which earn it.</div>`:"");
+}
+
+function buildNames(){
+  const names=properNouns(MODEL);
+  const host=$("nameRows");
+  if(!names.length){ host.innerHTML=`<div class="gx-empty">No recurring capitalised names found.</div>`; return; }
+  const max=names[0].gwis.length;
+  pagedRender("nameRows", names, 200, e=>rowMarkup(e.display, e.gwis.length, max, `data-idxs="${e.gwis.join(',')}"`));
+}
+
+function buildDialogueTags(){
+  const t=dialogueTagStats(MODEL); DTAGS=t;
+  if(!t.total){ $("dtagCard").classList.add("hidden"); return; }
+  $("dtagCard").classList.remove("hidden");
+  const plain=Math.round(t.neutral/t.total*100);
+  $("dtagStat").innerHTML=`${t.total.toLocaleString()} tag${t.total===1?'':'s'} \u00B7 <b>${plain}%</b> plain (<em>said/asked</em>) \u00B7 ${t.adverbTags.length.toLocaleString()} with an adverb`;
+  const max=t.verbs.length?t.verbs[0].count:1;
+  $("dtagRows").innerHTML=t.verbs.map(v=>rowMarkup(v.verb,v.count,max,`data-idxs="${v.firsts.join(',')}"${v.neutral?' data-plain="1"':''}`)).join("");
+  const adv=$("dtagAdverbs"), lbl=$("dtagAdvLabel");
+  if(!t.adverbTags.length){ lbl.classList.add("hidden"); adv.innerHTML=""; }
+  else { lbl.classList.remove("hidden");
+    adv.innerHTML=t.adverbTags.slice(0,200).map((a,i)=>`<button class="gx-dline" data-i="${i}">${esc(a.verb)} <em>${esc(a.adv)}</em></button>`).join("")
+      + (t.adverbTags.length>200?`<div class="gx-empty">Showing first 200 of ${t.adverbTags.length.toLocaleString()}.</div>`:""); }
+}
+
+function buildDensity(){
+  const card=$("densityCard");
+  if(STRIP_OFF){ $("densityStrip").innerHTML=`<div class="gx-strip-note">Hidden on mobile for very large documents &mdash; available on desktop.</div>`; card.classList.remove("hidden"); return; }
+  const dens=dialogueDensity(MODEL, 90);
+  if(!dens.length || dens.every(d=>d.pct===0)){ card.classList.add("hidden"); return; }
+  card.classList.remove("hidden");
+  $("densityStrip").innerHTML=dens.map(d=>{
+    const h=6+Math.round(d.pct*92);
+    return `<div class="gx-bar gx-dbar" style="height:${h}px;opacity:${(0.35+d.pct*0.65).toFixed(2)}" data-go="${d.gsi}" title="${Math.round(d.pct*100)}% dialogue"></div>`;
+  }).join("");
+}
+
+function runPhrases(){
+  const btn=$("phraseRun");
+  btn.disabled=true; const lbl=btn.textContent; btn.textContent="Scanning\u2026";
+  const heavy=MODEL.totalWords>PROGRESS_WORDS;
+  const go=()=>{
+    const phrases=detectPhrases(MODEL);
+    const host=$("phraseRows");
+    if(!phrases.length){ host.innerHTML=`<div class="gx-empty">No 3-to-5-word phrase repeats &mdash; nothing recurring.</div>`; }
+    else { const max=phrases[0].count;
+      pagedRender("phraseRows", phrases, 200, p=>
+        `<button class="gx-row gx-phraserow" data-idxs="${p.firsts.join(',')}" data-span="${p.phrase.split(' ').length}" title="step through each use">
+           <span class="term"><span class="word">${esc(p.phrase)}</span>
+           <span class="barwrap"><span class="barfill" style="width:${Math.round(p.count/max*100)}%"></span></span></span>
+           <span class="ct">${p.count}</span></button>`); }
+    btn.disabled=false; btn.textContent=lbl; $("phraseNote").textContent="";
+  };
+  if(heavy){ showBusy("Scanning phrases\u2026"); nextFrame().then(()=>{ go(); hideBusy(); }); }
+  else go();
+}
+function resetPhrases(){
+  if(PAGED) delete PAGED["phraseRows"];
+  const host=$("phraseRows"); if(host) host.innerHTML="";
+  const btn=$("phraseRun"); if(btn){ btn.disabled=false; btn.textContent="Find repeated phrases"; }
+  const note=$("phraseNote"); if(note) note.textContent="Run on demand \u2014 it scans every 3-to-5-word run, so it\u2019s the one heavier pass.";
+}
+
 /* ---------------- highlight + navigation ---------------- */
 function clearHL(){
   document.querySelectorAll(".hl-s,.hl-w,.hl-p").forEach(el=>el.classList.remove("hl-s","hl-w","hl-p"));
@@ -1012,26 +1634,47 @@ function clearHL(){
 function scrollIn(el){
   if(!el) return;
   const ms=$("ms");
+  if(isMobileView()){
+    placeManuscriptMobile();
+    // scroll the highlight into view within the manuscript box only — don't move the page to the manuscript
+    const inner=el.getBoundingClientRect().top - ms.getBoundingClientRect().top + ms.scrollTop - ms.clientHeight/2.4;
+    ms.scrollTo({top:inner, behavior:"auto"});
+    return;
+  }
   const top=el.getBoundingClientRect().top - ms.getBoundingClientRect().top + ms.scrollTop - ms.clientHeight/2.4;
   ms.scrollTo({top,behavior:reduced?"auto":"smooth"});
 }
-function gotoSentence(gsi){ clearHL(); const el=$("s"+gsi), bar=barEl(gsi);
+function gotoSentence(gsi){ clearHL(); const s=MODEL&&MODEL.sentences[gsi]; if(s) ensureParaRendered(s.pi);
+  const el=$("s"+gsi), bar=barEl(gsi);
   if(bar) bar.classList.add("on");
   if(el){ el.classList.add("hl-s"); scrollIn(el); }
   if(bar) scrollStripToBars([bar]); }
-function gotoWord(gwi){ clearHL(); const el=$("w"+gwi); if(el){el.classList.add("hl-w"); scrollIn(el);} }
-function gotoPara(pn){ clearHL(); const el=$("p"+pn); if(el){el.classList.add("hl-p"); scrollIn(el);} }
+function gotoWord(gwi){ clearHL(); const el=hlTarget(gwi,"hl-w"); if(el) scrollIn(el); }
+function gotoPara(pn){ clearHL(); ensureParaRendered(pn-1); const el=$("p"+pn); if(el){el.classList.add("hl-p"); scrollIn(el);} }
 function stepFreq(row){
   const els=document.querySelectorAll(`.gx-w[data-w="${CSS.escape(row.dataset.w)}"]`);
-  if(!els.length) return;
-  let cur=parseInt(row.dataset.cursor,10);
-  cur=isNaN(cur)?0:(cur+1)%els.length;
-  row.dataset.cursor=cur;
-  clearHL();
-  els[cur].classList.add("hl-w");
-  scrollIn(els[cur]);
-  const ct=row.querySelector(".ct");
-  if(ct) ct.textContent=(cur+1)+"/"+els.length;
+  if(els.length){
+    let cur=parseInt(row.dataset.cursor,10);
+    cur=isNaN(cur)?0:(cur+1)%els.length;
+    row.dataset.cursor=cur;
+    clearHL();
+    els[cur].classList.add("hl-w");
+    scrollIn(els[cur]);
+    const ct=row.querySelector(".ct");
+    if(ct) ct.textContent=(cur+1)+"/"+els.length;
+    return;
+  }
+  // large-doc mode: no per-word spans — step through the sentences that contain this word
+  if(WORD_INDEX){
+    const gwis=WORD_INDEX.get(row.dataset.w)||[];
+    if(!gwis.length) return;
+    let cur=parseInt(row.dataset.cursor,10);
+    cur=isNaN(cur)?0:(cur+1)%gwis.length;
+    row.dataset.cursor=cur;
+    gotoSentence(MODEL.allWords[gwis[cur]].gsi);
+    const ct=row.querySelector(".ct");
+    if(ct) ct.textContent=(cur+1)+"/"+gwis.length;
+  }
 }
 function stepWord(pill){
   const idxs=pill.dataset.idxs.split(",").map(Number).filter(n=>!isNaN(n));
@@ -1040,8 +1683,8 @@ function stepWord(pill){
   cur=isNaN(cur)?0:(cur+1)%idxs.length;   // first click -> first use; then advance, wrapping
   pill.dataset.cursor=cur;
   clearHL();
-  const el=$("w"+idxs[cur]);
-  if(el){ el.classList.add("hl-w"); scrollIn(el); }
+  const el=hlTarget(idxs[cur],"hl-w");
+  if(el) scrollIn(el);
   const b=pill.querySelector("b");
   if(b) b.textContent=(cur+1)+"/"+idxs.length;   // show position in the cycle
 }
@@ -1052,9 +1695,10 @@ function stepOpener(row){
   cur=isNaN(cur)?0:(cur+1)%list.length;
   row.dataset.cursor=cur;
   clearHL();
-  const gsi=list[cur], s=$("s"+gsi);
+  const gsi=list[cur], rec=MODEL.sentences[gsi];
+  if(rec) ensureParaRendered(rec.pi);
+  const s=$("s"+gsi);
   if(s){ s.classList.add("hl-s"); scrollIn(s); }
-  const rec=MODEL.sentences[gsi];
   if(rec && rec.wordIdxs.length){ const w=$("w"+rec.wordIdxs[0]); if(w) w.classList.add("hl-w"); }
   const ct=row.querySelector(".ct");
   if(ct) ct.textContent=(cur+1)+"/"+list.length;
@@ -1070,13 +1714,13 @@ function copyReport(){
   const wk=listBySet(MODEL,WEAKENERS).slice(0,8).map(([w,a])=>w+" ("+a.length+")");
   const ad=listAdverbs(MODEL).slice(0,8).map(([w,a])=>w+" ("+a.length+")");
   const lines=[
-    "GALLEYLEO REPORT",
+    "GALLEYLEO v"+GALLEY_VERSION+" REPORT",
     "",
     "Words: "+MODEL.totalWords,
     "Sentences: "+MODEL.sentences.length,
     "Paragraphs: "+MODEL.paras.length,
     "Unique words: "+MODEL.freq.size,
-    "Avg sentence: "+mean.toFixed(1)+" words (median "+median(lens)+", longest "+Math.max(0,...lens)+")",
+    "Avg sentence: "+mean.toFixed(1)+" words (median "+median(lens)+", longest "+maxOf(lens,0)+")",
     "Dialogue: "+(dialogueRatio(MODEL)*100).toFixed(0)+"% of words",
     "",
     "Openers: "+["Pronoun","Article","Dialogue","-ing","Conjunction","Other"].map(k=>(k==="Article"?'"The/A"':k)+" "+Math.round(ot[k]/otT*100)+"%").join(", "),
@@ -1134,13 +1778,17 @@ function buildCompareTable(A,B){
     rows.map(r=>statRow(r[0],r[1],r[2],r[3])).join("")+
     `</tbody></table><p class="gx-note">Directions only &mdash; whether a shift is an improvement is yours to judge. Analyze either draft on its own for the full breakdown with line-level links.</p>`;
 }
-function runCompare(){
+async function runCompare(){
   const t1=$("ta").value, t2=$("ta2").value;
   if(!t1.trim()){ $("ta").focus(); return; }
   if(!t2.trim()){ $("ta2").focus(); return; }
-  buildCompareTable(analyze(t1),analyze(t2));
+  const heavy = ((t1.length+t2.length) > PROGRESS_WORDS*6);   // rough char-based gauge for the compare path
+  if(heavy){ showBusy("Comparing\u2026"); await nextFrame(); }
+  const a1=analyze(t1, false), a2=analyze(t2, false);   // compare needs stats only, never per-word spans
+  buildCompareTable(a1,a2);
   $("inputView").classList.add("hidden");
   $("compareView").classList.remove("hidden");
+  if(heavy) hideBusy();
   window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
 }
 
@@ -1149,7 +1797,10 @@ $("goBtn").addEventListener("click",()=>{ if($("compareToggle").checked) runComp
 $("ta").addEventListener("input",()=>{
   const n=($("ta").value.match(WORD_RE)||[]).length;
   $("liveCount").textContent=n.toLocaleString()+" word"+(n===1?"":"s");
-  $("bigHint").textContent = n>25000 ? "large text \u2014 give it a second" : "";
+  const hint=$("bigHint");
+  if(n>250000){ hint.textContent="Over 250,000 words \u2014 well past the usual size; it works, but the analysis can be slow to process and may feel heavy."; hint.classList.add("warn"); }
+  else if(n>25000){ hint.textContent="large text \u2014 give it a second"; hint.classList.remove("warn"); }
+  else { hint.textContent=""; hint.classList.remove("warn"); }
 });
 $("ta").addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ if($("compareToggle").checked) runCompare(); else run(); } });
 $("ta2").addEventListener("input",()=>{
@@ -1177,12 +1828,44 @@ $("backBtn2").addEventListener("click",()=>{
   window.scrollTo({top:0,behavior:reduced?"auto":"smooth"});
 });
 $("copyBtn").addEventListener("click",copyReport);
+$("dlgCopy").addEventListener("click",copyDialogue);
+$("msDark").addEventListener("click",()=>{
+  const on=$("ms").classList.toggle("dark");
+  const b=$("msDark");
+  b.textContent = on ? "Light" : "Dark";
+  b.setAttribute("aria-pressed", on?"true":"false");
+});
 $("watchAdd").addEventListener("click",addWatch);
 $("watchInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addWatch(); } });
 $("findInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); runFind(); } });
 document.addEventListener("mousemove",onStripDrag);
 document.addEventListener("mouseup",onStripUp);
+$("strip").addEventListener("mousedown",e=>{ const b=e.target.closest(".gx-bar"); if(b) onBarDown(+b.dataset.s,e); });
+$("strip").addEventListener("touchstart",e=>{ const b=e.target.closest(".gx-bar"); if(b) onBarTouchStart(+b.dataset.s,e); },{passive:true});
+$("strip").parentElement.addEventListener("touchmove",onStripTouchMove,{passive:false});
+document.addEventListener("touchend",onStripTouchEnd);
+document.addEventListener("touchcancel",onStripTouchEnd);
 $("selClear").addEventListener("click",clearSelection);
+// delegated clicks for the paged panels (work for appended rows too)
+document.addEventListener("click",e=>{ const b=e.target.closest(".gx-loadmore"); if(b) pagedMore(b.dataset.host); });
+$("marks").addEventListener("click",e=>{ const b=e.target.closest(".gx-mk"); if(!b) return; const mk=MARKS[+b.dataset.i]; if(!mk) return; if(mk.gwi!=null) gotoWord(mk.gwi); else if(mk.gsi!=null) gotoSentence(mk.gsi); else gotoPara(mk.pi+1); });
+$("echoRows").addEventListener("click",e=>{ const b=e.target.closest(".gx-echo"); if(!b) return; const ec=ECHOES[+b.dataset.i]; if(!ec) return; clearHL(); const ea=hlTarget(ec.a,"hl-w"), eb=hlTarget(ec.b,"hl-w"); scrollIn(eb||ea); });
+$("dlgRows").addEventListener("click",e=>{ const b=e.target.closest(".gx-dline"); if(!b) return; const l=DLG_LINES[+b.dataset.i]; if(l) gotoDialogue(l.gwis); });
+$("openerSeq").addEventListener("click",e=>{ const c=e.target.closest(".gx-chip"); if(c) gotoSentence(+c.dataset.go); });
+$("paraStrip").addEventListener("click",e=>{ const b=e.target.closest(".gx-bar"); if(b) gotoPara(+b.dataset.p); });
+$("densityStrip").addEventListener("click",e=>{ const b=e.target.closest(".gx-bar"); if(b) gotoSentence(+b.dataset.go); });
+$("nameRows").addEventListener("click",e=>{ const b=e.target.closest(".gx-row"); if(b) stepIdxs(b); });
+$("dtagRows").addEventListener("click",e=>{ const b=e.target.closest(".gx-row"); if(b) stepIdxs(b); });
+$("phraseRows").addEventListener("click",e=>{ const b=e.target.closest(".gx-row"); if(b) stepIdxs(b); });
+$("dtagAdverbs").addEventListener("click",e=>{ const b=e.target.closest(".gx-dline"); if(!b||!DTAGS) return; const a=DTAGS.adverbTags[+b.dataset.i]; if(!a) return; clearHL(); let first=null; [a.verbGwi,a.advGwi].sort((x,y)=>x-y).forEach(g=>{ const el=hlTarget(g,"hl-w"); if(el&&!first) first=el; }); if(first) scrollIn(first); });
+$("phraseRun").addEventListener("click",runPhrases);
+MS_HOME=$("msHome");
+$("verStamp").textContent="v"+GALLEY_VERSION;
+$("resultsView").addEventListener("pointerdown",e=>{
+  const card=e.target.closest(".gx-card");
+  if(card && card.id!=="msCard") lastCardEl=card;
+},true);
+window.addEventListener("resize",()=>{ if(!isMobileView()) restoreManuscript(); });
 $("fnToggle").addEventListener("click",()=>{
   hideFn=!hideFn; $("fnToggle").classList.toggle("active",hideFn);
   $("fnToggle").textContent=hideFn?"Hide function words":"Show all words";
@@ -1216,12 +1899,10 @@ But he did have to be here. That was the whole of it. There was nowhere else tha
 
 $("ta").focus();
 </script>
-
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
   }
 </script>
-  
 </body>
 </html>
